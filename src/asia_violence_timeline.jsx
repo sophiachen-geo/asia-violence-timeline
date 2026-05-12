@@ -1010,33 +1010,54 @@ const ARCHETYPES = [
 ];
 
 function ExceptionsTable() {
+  const [openCountry, setOpenCountry] = useState(null);
   return (
     <div className="my-6 border-y py-4" style={{ borderColor: 'rgba(var(--text-rgb),0.12)' }}>
       <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>
-        THE SIX EXCEPTIONS · NO ARMED CONFLICT · NO POLITICAL MASS VIOLENCE
+        THE SIX EXCEPTIONS · NO ARMED CONFLICT · NO POLITICAL MASS VIOLENCE · CLICK A COUNTRY TO READ
       </div>
-      <div className="space-y-3">
+      <div className="space-y-1.5">
         {EXCEPTIONS.map(row => {
           const r = REGIONS[row.region];
+          const isOpen = openCountry === row.country;
           return (
             <div key={row.country}
-              className="flex flex-wrap items-baseline gap-x-5 gap-y-1 pb-2"
               style={{ borderBottom: '1px solid rgba(var(--text-rgb),0.06)' }}>
-              <div className="flex items-center gap-2" style={{ minWidth: '120px' }}>
-                <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: r.color }} />
-                <span className="mono text-[9px] tracking-wider" style={{ color: 'rgba(var(--text-rgb),0.5)' }}>
-                  {row.region.toUpperCase()}
+              <button
+                type="button"
+                onClick={() => setOpenCountry(isOpen ? null : row.country)}
+                aria-expanded={isOpen}
+                className="w-full flex flex-wrap items-baseline gap-x-5 gap-y-1 py-2.5 text-left"
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'inherit',
+                  fontFamily: 'inherit',
+                }}>
+                <div className="flex items-center gap-2" style={{ minWidth: '120px' }}>
+                  <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: r.color }} />
+                  <span className="mono text-[9px] tracking-wider" style={{ color: 'rgba(var(--text-rgb),0.5)' }}>
+                    {row.region.toUpperCase()}
+                  </span>
+                </div>
+                <div className="serif text-[15px] sm:text-[17px] flex-1" style={{ color: 'var(--text)' }}>
+                  {row.country}
+                </div>
+                <span className="mono text-[10px]" style={{ color: 'rgba(var(--text-rgb),0.5)' }} aria-hidden>
+                  {isOpen ? '−' : '+'}
                 </span>
-              </div>
-              <div className="serif text-[15px] sm:text-[17px]" style={{ color: 'var(--text)', minWidth: '110px' }}>
-                {row.country}
-              </div>
-              <div className="mono text-[11px]" style={{ color: 'rgba(var(--text-rgb),0.7)', minWidth: '70px' }}>
-                {row.population}
-              </div>
-              <div className="sans text-[12px] sm:text-[13px] italic flex-1" style={{ color: 'rgba(var(--text-rgb),0.8)' }}>
-                {row.reason}
-              </div>
+              </button>
+              {isOpen && (
+                <div className="pl-[120px] pb-3 pr-2 flex flex-wrap gap-x-5 gap-y-1">
+                  <div className="mono text-[11px]" style={{ color: 'rgba(var(--text-rgb),0.7)', minWidth: '70px' }}>
+                    {row.population}
+                  </div>
+                  <div className="sans text-[12px] sm:text-[13px] italic flex-1" style={{ color: 'rgba(var(--text-rgb),0.8)' }}>
+                    {row.reason}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -1047,38 +1068,60 @@ function ExceptionsTable() {
 
 function ArchetypesDiagram() {
   const accents = ['#c4615d', '#9683b8', '#5a8a85'];
+  const [openIdx, setOpenIdx] = useState(null);
   return (
     <div className="my-6">
       <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>
-        THREE PATHS TO PEACE · ONE CATEGORY PER COUNTRY
+        THREE PATHS TO PEACE · ONE CATEGORY PER COUNTRY · CLICK A PATH TO READ
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 items-start">
         {ARCHETYPES.map((a, i) => {
           const accent = accents[i];
+          const isOpen = openIdx === i;
           return (
-            <div key={a.name}
-              className="p-4 sm:p-5 rounded flex flex-col"
-              style={{ border: '1px solid ' + accent, backgroundColor: 'rgba(255,255,255,0.01)' }}>
-              <div className="mono text-[10px] tracking-[0.18em] mb-2" style={{ color: accent }}>
-                PATH {i + 1}
+            <button key={a.name}
+              type="button"
+              onClick={() => setOpenIdx(isOpen ? null : i)}
+              aria-expanded={isOpen}
+              className="p-4 sm:p-5 rounded flex flex-col text-left w-full"
+              style={{
+                border: '1px solid ' + accent,
+                backgroundColor: isOpen ? accent + '14' : 'rgba(255,255,255,0.01)',
+                cursor: 'pointer',
+                color: 'inherit',
+                fontFamily: 'inherit',
+                transition: 'background-color .15s ease',
+              }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="mono text-[10px] tracking-[0.18em]" style={{ color: accent }}>
+                  PATH {i + 1}
+                </div>
+                <span className="mono text-[10px]" style={{ color: accent, opacity: 0.7 }} aria-hidden>
+                  {isOpen ? '−' : '+'}
+                </span>
               </div>
               <h4 className="serif font-medium mb-3"
                 style={{ color: 'var(--text)', fontSize: '20px', lineHeight: 1.15 }}>
                 {a.name}
               </h4>
               <div className="w-12 h-px mb-3" style={{ backgroundColor: accent, opacity: 0.5 }} />
-              <p className="sans text-[13px] leading-relaxed mb-5 flex-1"
-                style={{ color: 'rgba(var(--text-rgb),0.78)' }}>
-                {a.mechanism}
-              </p>
               <div className="mono text-[10px] tracking-[0.15em] mb-1.5"
                 style={{ color: 'rgba(var(--text-rgb),0.5)' }}>
                 COUNTRIES
               </div>
-              <ul className="serif text-[15px] space-y-0.5" style={{ color: 'var(--text)' }}>
+              <ul className="serif text-[15px] space-y-0.5 mb-0" style={{ color: 'var(--text)' }}>
                 {a.countries.map(c => <li key={c}>{c}</li>)}
               </ul>
-            </div>
+              {isOpen && (
+                <p className="sans text-[13px] leading-relaxed mt-4 pt-3"
+                  style={{
+                    color: 'rgba(var(--text-rgb),0.82)',
+                    borderTop: '1px solid ' + accent + '55',
+                  }}>
+                  {a.mechanism}
+                </p>
+              )}
+            </button>
           );
         })}
       </div>
@@ -1099,25 +1142,52 @@ function ImperialCircuitDiagram() {
     { label: "MECHANISM 3 · 1965 to present", color: "#5a8a85", title: "Refugee production and immigration reform",
       desc: "1965 US Hart-Celler; 1967 Canada points system." },
   ];
+  const [openIdx, setOpenIdx] = useState(null);
   return (
     <div className="my-8">
       <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>
-        THREE MECHANISMS · LABOR EXTRACTION TO DISPLACEMENT TO ARRIVAL
+        THREE MECHANISMS · LABOR EXTRACTION TO DISPLACEMENT TO ARRIVAL · CLICK A MECHANISM TO READ
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
-        {phases.map((p, i) => (
-          <div key={i} className="p-4 sm:p-5 rounded" style={{ border: '1px solid ' + p.color }}>
-            <div className="mono text-[10px] tracking-[0.1em] mb-2" style={{ color: p.color }}>
-              {p.label}
-            </div>
-            <div className="serif text-[17px] sm:text-[18px] mb-2" style={{ color: 'var(--text)', lineHeight: 1.2 }}>
-              {p.title}
-            </div>
-            <div className="sans text-[12px] sm:text-[13px] leading-relaxed" style={{ color: 'rgba(var(--text-rgb),0.72)' }}>
-              {p.desc}
-            </div>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-6 items-start">
+        {phases.map((p, i) => {
+          const isOpen = openIdx === i;
+          return (
+            <button key={i}
+              type="button"
+              onClick={() => setOpenIdx(isOpen ? null : i)}
+              aria-expanded={isOpen}
+              className="p-4 sm:p-5 rounded text-left w-full"
+              style={{
+                border: '1px solid ' + p.color,
+                backgroundColor: isOpen ? p.color + '14' : 'transparent',
+                cursor: 'pointer',
+                color: 'inherit',
+                fontFamily: 'inherit',
+                transition: 'background-color .15s ease',
+              }}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="mono text-[10px] tracking-[0.1em]" style={{ color: p.color }}>
+                  {p.label}
+                </div>
+                <span className="mono text-[10px]" style={{ color: p.color, opacity: 0.7 }} aria-hidden>
+                  {isOpen ? '−' : '+'}
+                </span>
+              </div>
+              <div className="serif text-[17px] sm:text-[18px]" style={{ color: 'var(--text)', lineHeight: 1.2 }}>
+                {p.title}
+              </div>
+              {isOpen && (
+                <div className="sans text-[12px] sm:text-[13px] leading-relaxed mt-3 pt-3"
+                  style={{
+                    color: 'rgba(var(--text-rgb),0.78)',
+                    borderTop: '1px solid ' + p.color + '55',
+                  }}>
+                  {p.desc}
+                </div>
+              )}
+            </button>
+          );
+        })}
       </div>
       <p className="serif italic text-center text-[15px] sm:text-[17px] leading-snug max-w-2xl mx-auto"
         style={{ color: 'var(--text)' }}>
@@ -1608,8 +1678,7 @@ export default function AsiaViolenceTimeline() {
             </p>
           </div>
 
-          <SubsectionHeading eyebrow="THREE PATHS" title="Three paths to peace" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
+          <div className="mt-10 space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The six cases divide cleanly into three archetypes rather than into a checklist of overlapping conditions. Each country fits exactly one archetype. The typology is more analytically useful than a count of which structural conditions any given country exhibits, partly because the cases are too few for cumulative conditions to discriminate among them, and partly because the underlying mechanisms differ in kind, not merely in degree.
             </p>
@@ -1674,7 +1743,7 @@ export default function AsiaViolenceTimeline() {
 
           <ImperialCircuitDiagram />
 
-          <SubsectionHeading eyebrow="MECHANISM ONE" title="The first mechanism: imperial labor extraction" />
+          <SubsectionHeading eyebrow="MECHANISM ONE" title="Imperial labor extraction" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The first historical mechanism connecting Asia to North America was imperial labor extraction. Chinese migration accelerated through railway construction, mining economies, plantation systems, and the Gold Rush labor markets of the nineteenth century. Stanford's Chinese Railroad Workers in North America Project estimates that fifteen to twenty thousand Chinese migrants laid the tracks of the western Central Pacific portion of the Transcontinental Railroad, completed at Promontory Summit in Utah on May 10, 1869. (The eastward Union Pacific track was built largely by Irish, German, and other European immigrants, by formerly enslaved Black workers, and by Mormon contractors.) South Asian migration to North America emerged from the British imperial labor circuits that moved Indian workers across the empire and across the Pacific world. Filipino migration expanded under American colonial rule after the annexation of the Philippines in 1898. Japanese migration to Hawai&#x2018;i and the Pacific coast developed through plantation recruitment systems tied to expanding imperial-commercial networks. The first recorded Japanese resident in the United States, Manjiro Nakahama, arrived at New Bedford on May 6, 1843, on the whaling vessel that had rescued him from a shipwreck; federal commemorative materials use May 7.<Cite ids={[54]}/>
@@ -1684,7 +1753,7 @@ export default function AsiaViolenceTimeline() {
             </p>
           </div>
 
-          <SubsectionHeading eyebrow="MECHANISM TWO" title="The second mechanism: violent decolonization" />
+          <SubsectionHeading eyebrow="MECHANISM TWO" title="Violent decolonization" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The second mechanism was violent decolonization. A striking proportion of the conflicts represented in this timeline trace directly to imperial dissolution and to the borders, populations, and unresolved questions that imperial powers left behind.
@@ -1697,7 +1766,7 @@ export default function AsiaViolenceTimeline() {
             </p>
           </div>
 
-          <SubsectionHeading eyebrow="MECHANISM THREE" title="The third mechanism: refugee production and immigration reform" />
+          <SubsectionHeading eyebrow="MECHANISM THREE" title="Refugee production and immigration reform" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The third mechanism was the synchronization of refugee production with immigration reform in North America. The United States Immigration and Nationality Act of 1965, often referred to as Hart-Celler, and Canada's introduction of a points-based immigration system through Order-in-Council PC 1967-1616 in August 1967, dismantled much of the explicit racial architecture that had previously restricted Asian migration. These reforms coincided historically with decades during which Asia generated some of the largest refugee flows in the world.
@@ -1743,14 +1812,14 @@ export default function AsiaViolenceTimeline() {
             Methodology, Caveats, and Uncertainties
           </h2>
 
-          <SubsectionHeading eyebrow="CITATION" title="Citation system" />
+          <SubsectionHeading title="Citation system" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               This project uses a numeric reference system in the Vancouver style. Every claim attributable to a specific source carries a superscript number in the text, and the full bibliographic entry appears in the numbered list at the end of the page. Clicking any superscript scrolls directly to the matching reference; the destination row briefly highlights, so that the eye can locate it. The numbering is consistent across event tooltips and analytical text &#x2014; reference 18, for example, is Talbot and Singh's <em>The Partition of India</em> wherever it appears.
             </p>
           </div>
 
-          <SubsectionHeading eyebrow="METHODOLOGY" title="Classification and counting" />
+          <SubsectionHeading title="Classification and counting" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The catalogue distinguishes two analytical categories. <em>Armed Conflict</em> includes interstate wars, civil wars, sustained insurgencies, and short but consequential conventional clashes; these appear in the timeline as solid bars. <em>Political Mass Violence</em> includes state repression, politicide, ethnic cleansing, genocide, policy-induced famine, and systematic detention; these appear as patterned bars marked with a PV badge. Where analytically warranted, sub-events such as the Yazidi genocide and the Mullivaikkal mass killing are treated alongside their parent conflicts rather than as separate entries. The geographic scope follows the conventional United Nations Asia scheme, including the South Caucasus and including the Soviet Union only where it appears as an external actor in conflicts whose opponent is an Asian state &#x2014; the Sino-Soviet Border Conflict and the Soviet-Afghan War. Casualty and displacement figures are mid-range estimates drawn from the cited sources. The cumulative displacement total double-counts individuals displaced more than once. This is a known feature of the methodology rather than an error.
@@ -1763,7 +1832,7 @@ export default function AsiaViolenceTimeline() {
             </p>
           </div>
 
-          <SubsectionHeading eyebrow="CAVEATS" title="Five categories of uncertainty" />
+          <SubsectionHeading title="Five categories of uncertainty" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The casualty figures presented throughout are mid-range estimates. The certainty conveyed by any single number frequently exceeds the certainty that the underlying historiography supports, and readers are asked to keep this in view.
@@ -1793,9 +1862,8 @@ export default function AsiaViolenceTimeline() {
         {/* REFERENCES                                                      */}
         {/* ============================================================ */}
         <section className="mt-20 sm:mt-24">
-          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: 'var(--accent)' }}>REFERENCES</div>
           <h2 className="serif font-medium mb-6" style={{ color: 'var(--text)', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
-            Citation Reference List
+            References
           </h2>
           {(() => {
             const REF_SECTIONS = [

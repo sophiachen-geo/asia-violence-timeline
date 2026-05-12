@@ -96,6 +96,14 @@ function mix(a, b, t) {
   return '#' + [r, g, bl].map(v => v.toString(16).padStart(2, '0')).join('');
 }
 
+// Compact-format a numeric estimate for dashboard headlines:
+// 1234 → "1.2k", 75000 → "75k", 1_900_000 → "1.9M", 37_500_000 → "38M".
+const COMPACT_FMT = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
+function fmtCompact(n) {
+  if (!n || n <= 0) return '—';
+  return COMPACT_FMT.format(n);
+}
+
 // Simple **bold** markdown → <strong>. Used to render event notes.
 function renderBold(text, key) {
   if (!text) return null;
@@ -353,7 +361,9 @@ export default function Convergence() {
 
   const periodTotals = useMemo(() => {
     const overlapping = events.filter(e => e.end >= yearRange[0] && e.start <= yearRange[1]);
-    return { evCount: overlapping.length, events: overlapping };
+    const deathsSum = overlapping.reduce((s, e) => s + (e.deathsEst || 0), 0);
+    const displacedSum = overlapping.reduce((s, e) => s + (e.displacedEst || 0), 0);
+    return { evCount: overlapping.length, events: overlapping, deathsSum, displacedSum };
   }, [events, yearRange]);
 
   useEffect(() => {
@@ -659,34 +669,28 @@ export default function Convergence() {
             </button>
           </div>
 
-          {/* TWO-COLUMN STATS */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isPhone ? '1fr' : '1fr 1fr',
-            gap: isPhone ? 14 : 24, alignItems: 'stretch',
-          }}>
-            <StatsColumn
-              T={T} isPhone={isPhone}
-              heading={`WITHIN PERIOD · ${yearRange[0]} TO ${yearRange[1]}`}
-              subheading="Events in the catalogue overlapping this range. Death and displacement figures are listed per event, exactly as recorded."
-              items={[
-                { label: 'Events overlapping range', value: periodTotals.evCount, big: true, color: T.accent },
-                { label: 'Armed conflict', value: periodTotals.events.filter(e => e.cat === 'AC').length },
-                { label: 'Political violence', value: periodTotals.events.filter(e => e.cat === 'PV').length },
-              ]}
-            />
-            <StatsColumn
-              T={T} isPhone={isPhone}
-              heading={`IN ${scrubYear} ONLY`}
-              subheading="Number of catalogue events whose duration covers this year."
-              tone="alt"
-              items={[
-                { label: 'Events active', value: activeInYear.length, big: true, color: T.accent },
-                { label: 'Armed conflict', value: activeInYear.filter(e => e.cat === 'AC').length },
-                { label: 'Political violence', value: activeInYear.filter(e => e.cat === 'PV').length },
-              ]}
-            />
-          </div>
+          {/* WITHIN-PERIOD STATS · full width; stat set adapts to category filter */}
+          <StatsColumn
+            T={T} isPhone={isPhone}
+            heading={`WITHIN PERIOD · ${yearRange[0]} TO ${yearRange[1]}`}
+            subheading="Events in the catalogue overlapping this range. Estimated death and displacement totals are the sum of mid-range figures across overlapping events; treat as order-of-magnitude, not precise."
+            items={(() => {
+              const acCount = periodTotals.events.filter(e => e.cat === 'AC').length;
+              const pvCount = periodTotals.events.filter(e => e.cat === 'PV').length;
+              const total = { label: 'Events overlapping range', value: periodTotals.evCount, big: true, color: T.accent };
+              const deaths = { label: 'Estimated dead', value: fmtCompact(periodTotals.deathsSum) };
+              const displaced = { label: 'Estimated displaced', value: fmtCompact(periodTotals.displacedSum) };
+              if (cat === 'AC') return [total, { label: 'Armed conflict', value: acCount }, deaths, displaced];
+              if (cat === 'PV') return [total, { label: 'Political violence', value: pvCount }, deaths, displaced];
+              return [
+                total,
+                { label: 'Armed conflict', value: acCount },
+                { label: 'Political violence', value: pvCount },
+                deaths,
+                displaced,
+              ];
+            })()}
+          />
         </div>
       </div>
 
@@ -797,6 +801,34 @@ export default function Convergence() {
             onSelect={(y) => { setScrubYear(y); setPlaying(false); }}
             isPhone={isPhone}
           />
+
+          {/* YEARLY STATS · directly under the histogram, stat set mirrors the within-period set */}
+          <div style={{ marginTop: 14 }}>
+            <StatsColumn
+              T={T} isPhone={isPhone}
+              heading={`IN ${scrubYear} ONLY`}
+              subheading="Catalogue events whose duration covers this year. Estimated dead and displaced are summed across those events."
+              tone="alt"
+              items={(() => {
+                const acCount = activeInYear.filter(e => e.cat === 'AC').length;
+                const pvCount = activeInYear.filter(e => e.cat === 'PV').length;
+                const deathsSum = activeInYear.reduce((s, e) => s + (e.deathsEst || 0), 0);
+                const displacedSum = activeInYear.reduce((s, e) => s + (e.displacedEst || 0), 0);
+                const total = { label: 'Events active', value: activeInYear.length, big: true, color: T.accent };
+                const deaths = { label: 'Estimated dead', value: fmtCompact(deathsSum) };
+                const displaced = { label: 'Estimated displaced', value: fmtCompact(displacedSum) };
+                if (cat === 'AC') return [total, { label: 'Armed conflict', value: acCount }, deaths, displaced];
+                if (cat === 'PV') return [total, { label: 'Political violence', value: pvCount }, deaths, displaced];
+                return [
+                  total,
+                  { label: 'Armed conflict', value: acCount },
+                  { label: 'Political violence', value: pvCount },
+                  deaths,
+                  displaced,
+                ];
+              })()}
+            />
+          </div>
         </div>
       </div>
 
