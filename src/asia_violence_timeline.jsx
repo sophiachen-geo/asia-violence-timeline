@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTheme } from './useTheme.js';
+import Convergence from './Convergence.jsx';
 
 const START_YEAR = 1945;
 const END_YEAR = 2026;
@@ -1061,6 +1062,16 @@ function SubsectionHeading({ eyebrow, title }) {
 
 export default function AsiaViolenceTimeline() {
   const [theme, setTheme] = useTheme();
+  // Part I view toggle: 'convergence' (default) shows the dashboard / map / grid;
+  // 'database' shows the original timeline. Persisted to localStorage so the
+  // reader's choice survives page reloads.
+  const [viewMode, setViewMode] = useState(() => {
+    if (typeof window === 'undefined') return 'convergence';
+    return localStorage.getItem('avt-view') === 'database' ? 'database' : 'convergence';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('avt-view', viewMode);
+  }, [viewMode]);
   const [activeCountries, setActiveCountries] = useState(new Set(ALL_COUNTRIES));
   const [activeCategory, setActiveCategory] = useState("Both");
   const [groupBy, setGroupBy] = useState("region");
@@ -1159,7 +1170,7 @@ export default function AsiaViolenceTimeline() {
         }
       `}</style>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-12 relative">
         {/* HEADER */}
         <header className="mb-8 sm:mb-12">
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
@@ -1220,6 +1231,83 @@ export default function AsiaViolenceTimeline() {
             </p>
           </div>
         </header>
+
+        {/* ============================================================ */}
+        {/* PART I                                                          */}
+        {/* ============================================================ */}
+        <section className="mt-12 sm:mt-16">
+          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: 'var(--accent)' }}>PART I</div>
+          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: 'rgba(var(--text-rgb),0.65)' }}>
+            ASIA · POLITICAL VIOLENCE AND ARMED CONFLICT · 1945 TO 2026
+          </div>
+          <h2 className="serif font-medium mb-4" style={{ color: 'var(--text)', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
+            Where It Happened, <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>When It Happened.</span>
+          </h2>
+
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl mb-7" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
+            <p>
+              Part I presents the catalogue itself: 136 events of armed conflict and political mass violence across Asia from 1945 to 2026, drawn from academic monographs, UN commissions of inquiry, the institutional conflict datasets UCDP, PRIO, and ACLED, and contemporary reporting.
+            </p>
+            <p>
+              Two views over the same dataset, switchable below. The Convergence view, default, plots each event as a symbol on a stylized Asia map and surfaces concurrent activity through a country-by-year grid. The Database view presents each event as a horizontal bar on a regional or country timeline, expandable for the full description.
+            </p>
+          </div>
+
+          {/* VIEW TOGGLE */}
+          <div className="flex items-center gap-2 mb-7 flex-wrap">
+            <span className="mono text-[10px] tracking-[0.22em] mr-1" style={{ color: 'rgba(var(--text-rgb),0.5)' }}>VIEW</span>
+            {[['convergence', 'CONVERGENCE'], ['database', 'DATABASE']].map(([k, lbl]) => (
+              <button key={k} onClick={() => setViewMode(k)} className="mono text-[10px] tracking-[0.2em] px-3 py-1.5 rounded-full"
+                style={{
+                  background: viewMode === k ? 'var(--accent)' : 'transparent',
+                  color: viewMode === k ? 'var(--bg)' : 'var(--accent)',
+                  border: '1px solid var(--accent)',
+                  cursor: 'pointer',
+                }}>
+                {viewMode === k ? '● ' : ''}{lbl}
+              </button>
+            ))}
+          </div>
+
+          {/* READING GUIDE — adapts to current view */}
+          {viewMode === 'convergence' ? (
+            <div className="max-w-3xl mb-10">
+              <div className="mono text-[10px] tracking-[0.25em] mb-3" style={{ color: 'rgba(var(--text-rgb),0.6)' }}>
+                HOW TO READ THE CONVERGENCE VIEW
+              </div>
+              <p className="sans text-[14px] sm:text-[15px] leading-relaxed mb-3" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
+                The map below encodes each catalogue event through three orthogonal visual channels on a stylized longitude/latitude projection of Asia. None of the channels overlap; each is independent of the others.
+              </p>
+              <dl className="m-0">
+                {[
+                  { term: 'Shape encodes category.', def: 'A filled circle marks an armed conflict (interstate war, civil war, sustained insurgency, conventional clash). A filled diamond marks a campaign of political mass violence (politicide, ethnic cleansing, genocide, policy-induced famine, or systematic detention).' },
+                  { term: 'Core size encodes fatalities.', def: 'The radius of the solid core scales with the mid-range estimate of people killed during the event, drawn from the cited primary sources.' },
+                  { term: 'Halo size encodes displacement.', def: "The translucent ring scales with the mid-range estimate of people displaced over the event's duration. Events without a recorded displacement figure render with no halo." },
+                  { term: 'Colour encodes region.', def: "Each symbol takes the colour of the country at which it is plotted, not of the event's protagonist. An event spanning multiple countries appears once per country, each in that country's regional colour." },
+                ].map(row => (
+                  <div key={row.term} className="grid sm:grid-cols-[220px_1fr] gap-1 sm:gap-4 py-2.5"
+                    style={{ borderTop: '1px solid rgba(var(--text-rgb),0.18)' }}>
+                    <dt className="serif text-[14px] sm:text-[15px] font-medium" style={{ color: 'var(--text)' }}>{row.term}</dt>
+                    <dd className="serif text-[14px] sm:text-[15px] m-0 leading-relaxed" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>{row.def}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="sans text-[14px] leading-relaxed mt-3" style={{ color: 'rgba(var(--text-rgb),0.7)' }}>
+                Click any symbol to open the full event description in the detail card below the map. Casualty and displacement figures appear verbatim from the source catalogue and should be read as historical approximations rather than definitive totals. Inline numeric superscripts in the description scroll directly to the matching entry in the references list at the bottom of the page.
+              </p>
+            </div>
+          ) : (
+            <div className="max-w-3xl mb-10">
+              <div className="mono text-[10px] tracking-[0.25em] mb-3" style={{ color: 'rgba(var(--text-rgb),0.6)' }}>
+                HOW TO READ THE DATABASE VIEW
+              </div>
+              <p className="sans text-[14px] sm:text-[15px] leading-relaxed" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
+                The timeline below renders each catalogue event as a horizontal bar positioned by its year span. <strong style={{ color: 'var(--text)' }}>Solid bars</strong> mark armed conflict; <strong style={{ color: 'var(--text)' }}>patterned bars marked PV</strong> mark campaigns of political mass violence. Bar colour reflects the event's region. Click any bar to expand its full description, including casualty figures, displaced figures, and source citations. Use the year-range slider, the category pills, the group-by toggle, and the country filter to narrow the catalogue.
+              </p>
+            </div>
+          )}
+
+          {viewMode === 'convergence' ? <Convergence /> : (<>
 
         {/* STATS */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-5 mb-6 sm:mb-8 py-4 border-y" style={{ borderColor: 'rgba(var(--text-rgb),0.12)' }}>
@@ -1350,6 +1438,9 @@ export default function AsiaViolenceTimeline() {
             })}
           </div>
         )}
+
+          </>)}
+        </section>
 
         {/* ============================================================ */}
         {/* PART II                                                         */}

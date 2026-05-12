@@ -19,6 +19,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   EVENTS as RAW_EVENTS,
   COUNTRY_REGION,
+  Cite,
 } from './asia_violence_timeline.jsx';
 import { COUNTRY_COORDS } from './data/country_coords.js';
 import { useTheme } from './useTheme.js';
@@ -137,8 +138,8 @@ export default function Convergence() {
     return a;
   }, []);
 
-  // ── theme (shared with the essay) ──────────────────────────────
-  const [theme, setTheme] = useTheme();
+  // ── theme (shared with the essay; the toggle lives in the essay header) ──
+  const [theme] = useTheme();
 
   const T = theme === 'dark' ? {
     bg:           '#0e1118',
@@ -206,6 +207,17 @@ export default function Convergence() {
   const [gridHover, setGridHover] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [selectedCell, setSelectedCell] = useState(null);
+
+  // Names of events whose map symbols should briefly blink (triggered
+  // by a grid-cell click). The key increments each time so the CSS
+  // animation re-runs even when the same set of names is set again.
+  const [blinkEvents, setBlinkEvents] = useState(new Set());
+  const [blinkKey, setBlinkKey] = useState(0);
+  const triggerBlink = (eventNames) => {
+    setBlinkEvents(new Set(eventNames));
+    setBlinkKey(k => k + 1);
+    setTimeout(() => setBlinkEvents(new Set()), 1800);
+  };
 
   const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1280);
   useEffect(() => {
@@ -346,10 +358,15 @@ export default function Convergence() {
   };
 
   // ── Map projection ───────────────────────────────────────────
-  const mapAspect = 760 / 460;
+  // The lon/lat range is intentionally wider than the actual extent of
+  // plotted countries so that the largest symbols (e.g. Great Leap
+  // Forward at ~28px radius) stay fully inside the viewBox. Without
+  // this padding, dots near Japan, Soviet Union, and Mongolia clip at
+  // the right and top edges.
+  const minLon = 22, maxLon = 152, minLat = -18, maxLat = 64;
+  const mapAspect = (maxLon - minLon) / (maxLat - minLat); // ≈ 1.585
   const mapW = isPhone ? Math.min(vw - 48, 480) : isTablet ? Math.min(vw - 80, 660) : 760;
   const mapH = mapW / mapAspect;
-  const minLon = 28, maxLon = 145, minLat = -12, maxLat = 56;
   const project = (lon, lat) => [
     ((lon - minLon) / (maxLon - minLon)) * mapW,
     mapH - ((lat - minLat) / (maxLat - minLat)) * mapH,
@@ -443,9 +460,8 @@ export default function Convergence() {
 
   return (
     <div style={{
-      background: T.bg, color: T.text, minHeight: '100vh',
+      background: 'transparent', color: T.text,
       fontFamily: "'DM Sans', system-ui, sans-serif",
-      transition: 'background-color 180ms ease, color 180ms ease',
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400&display=swap');
@@ -456,151 +472,27 @@ export default function Convergence() {
         .cv-sym   { cursor: pointer; transition: transform .1s ease; transform-origin: center; transform-box: fill-box; }
         .cv-sym:hover { transform: scale(1.12); }
         .cv-chip-x { opacity:.6; } .cv-chip:hover .cv-chip-x { opacity:1; }
+        @keyframes cv-blink-ring {
+          0%   { transform-origin: center; transform: scale(0.8); opacity: 0.9; }
+          100% { transform-origin: center; transform: scale(2.6); opacity: 0; }
+        }
+        .cv-blink-ring {
+          transform-box: fill-box;
+          animation: cv-blink-ring 0.9s ease-out 2;
+          pointer-events: none;
+        }
         @media (prefers-reduced-motion: reduce) {
           .cv-sym, .cv-cell { transition: none !important; }
+          .cv-blink-ring { animation: none !important; }
         }
       `}</style>
 
-      {/* HEADER (theme toggle only; the project framing lives below in INTRO + PART I) */}
-      <header style={{
-        padding: isPhone ? '20px 18px 0' : '28px 48px 0',
-        display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
-        gap: 8,
-      }}>
-        <button
-          onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-          className="cv-mono"
-          style={{
-            background: T.panel, color: T.text, border: '1px solid ' + T.rule,
-            padding: '7px 14px', fontSize: 10, letterSpacing: '.2em',
-            borderRadius: 99, cursor: 'pointer',
-          }}
-          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-        >
-          {theme === 'dark' ? '☼ LIGHT' : '☾ DARK'}
-        </button>
-      </header>
-
-      {/* INTRO */}
-      <section style={{
-        padding: isPhone ? '18px 18px 0' : '14px 48px 0',
-        maxWidth: 1100, margin: '0 auto',
-      }}>
-        <div className="cv-mono" style={{
-          fontSize: 10, letterSpacing: '.3em', color: T.accent, marginBottom: 10,
-        }}>INTRODUCTION</div>
-        <p className="cv-serif" style={{
-          fontSize: isPhone ? 15 : 17, lineHeight: 1.55, color: T.text,
-          margin: '0 0 12px', maxWidth: 820,
-        }}>
-          A combined record of armed conflict and political mass violence across Asia, 1945 to 2026. The catalogue assembles 136 events across 46 countries, drawn from academic monographs, UN commissions of inquiry, institutional conflict datasets including UCDP, PRIO, and ACLED, and contemporary reporting.
-        </p>
-        <p className="cv-serif" style={{
-          fontSize: isPhone ? 14 : 15, lineHeight: 1.55, color: T.mute,
-          margin: 0, maxWidth: 820,
-        }}>
-          Two views over the same dataset. The Convergence view, below, lets a reader explore the catalogue along category, region, country, and time-period dimensions through a coordinated dashboard, Asia map, and country-by-year grid. The Database view presents the same events as a chronological essay with analytical sections on the conditions of peace, on empire and migration, and on methodology.
-        </p>
-      </section>
-
-      {/* PART I */}
-      <section style={{
-        padding: isPhone ? '32px 18px 0' : '40px 48px 0',
-        maxWidth: 1100, margin: '0 auto',
-      }}>
-        <div className="cv-mono" style={{
-          fontSize: 10, letterSpacing: '.3em', color: T.accent, marginBottom: 10,
-        }}>PART I</div>
-        <div className="cv-mono" style={{
-          fontSize: 10, letterSpacing: '.3em', color: T.mute, marginBottom: 10,
-        }}>
-          ASIA · POLITICAL VIOLENCE AND ARMED CONFLICT · 1945 TO 2026
-        </div>
-        <h1 className="cv-serif" style={{
-          fontSize: isPhone ? 28 : isTablet ? 36 : 44, fontWeight: 500,
-          lineHeight: 1.05, margin: '0 0 18px', color: T.headline,
-        }}>
-          Where It Happened, <span style={{ fontStyle: 'italic', color: T.accent }}>When It Happened.</span>
-        </h1>
-
-        {/* Rigorous encoding key */}
-        <div style={{ maxWidth: 820, marginBottom: 24 }}>
-          <p className="cv-serif" style={{
-            fontSize: isPhone ? 14 : 15, lineHeight: 1.6, color: T.text,
-            margin: '0 0 14px',
-          }}>
-            The map below encodes each catalogue event through three orthogonal visual channels on a stylized lon/lat projection of Asia. None of the channels overlap; each is independent of the others.
-          </p>
-          <dl style={{ margin: 0 }}>
-            {[
-              {
-                term: 'Shape encodes category.',
-                def: 'A filled circle marks an armed conflict (interstate war, civil war, sustained insurgency, conventional clash). A filled diamond marks a campaign of political mass violence (politicide, ethnic cleansing, genocide, policy-induced famine, or systematic detention).',
-              },
-              {
-                term: 'Core size encodes fatalities.',
-                def: "The radius of the solid core scales with the mid-range estimate of people killed during the event, drawn from the cited primary sources.",
-              },
-              {
-                term: 'Halo size encodes displacement.',
-                def: "The translucent ring scales with the mid-range estimate of people displaced over the event's duration. Events without a recorded displacement figure render with no halo.",
-              },
-              {
-                term: 'Colour encodes region.',
-                def: "Each symbol takes the colour of the country at which it is plotted, not of the event's protagonist. An event spanning multiple countries appears once per country, each in that country's regional colour.",
-              },
-            ].map((row) => (
-              <div key={row.term} style={{
-                display: 'grid',
-                gridTemplateColumns: isPhone ? '1fr' : '220px 1fr',
-                gap: isPhone ? 4 : 18,
-                padding: '10px 0',
-                borderTop: '1px solid ' + T.rule,
-              }}>
-                <dt className="cv-serif" style={{
-                  fontSize: isPhone ? 13.5 : 14.5, color: T.text, fontWeight: 500,
-                }}>{row.term}</dt>
-                <dd className="cv-serif" style={{
-                  margin: 0,
-                  fontSize: isPhone ? 13.5 : 14.5, lineHeight: 1.55, color: T.mute,
-                }}>{row.def}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="cv-serif" style={{
-            fontSize: isPhone ? 13.5 : 14.5, lineHeight: 1.55, color: T.mute,
-            margin: '14px 0 0',
-          }}>
-            Click any symbol to open the full event description in the detail card below the map. Casualty and displacement figures appear verbatim from the source catalogue and should be read as historical approximations rather than definitive totals.
-          </p>
-        </div>
-
-        {/* VIEW SWITCH */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '14px 0 28px', flexWrap: 'wrap',
-        }}>
-          <span className="cv-mono" style={{
-            fontSize: 9, letterSpacing: '.22em', color: T.faint, marginRight: 4,
-          }}>VIEW</span>
-          <span className="cv-mono" style={{
-            background: T.accent, color: T.accentInk,
-            padding: '6px 14px', fontSize: 10, letterSpacing: '.2em',
-            borderRadius: 99, border: '1px solid ' + T.accent,
-          }}>● CONVERGENCE</span>
-          <a href="?view=database" className="cv-mono" style={{
-            background: 'transparent', color: T.accent,
-            padding: '6px 14px', fontSize: 10, letterSpacing: '.2em',
-            borderRadius: 99, border: '1px solid ' + T.accent,
-            textDecoration: 'none', cursor: 'pointer',
-          }}>
-            DATABASE →
-          </a>
-        </div>
-      </section>
+      {/* This component is embedded inside the After Empire essay's PART I.
+          The page header, theme toggle, intro paragraphs, PART I title and
+          encoding key, and the view switch all live in the parent. */}
 
       {/* DASHBOARD */}
-      <div style={{ padding: isPhone ? '0 18px 16px' : '8px 48px 18px' }}>
+      <div style={{ padding: isPhone ? '0 0 16px' : '0 0 18px' }}>
         <div style={{
           background: T.panel, border: '1px solid ' + T.panelBorder,
           borderRadius: 6, padding: isPhone ? '14px' : '18px 22px',
@@ -754,7 +646,7 @@ export default function Convergence() {
       </div>
 
       {/* TIME PERIOD + HISTOGRAM (kept together) */}
-      <div style={{ padding: isPhone ? '0 18px 14px' : '0 48px 18px' }}>
+      <div style={{ padding: '0 0 14px' }}>
         <div style={{
           background: T.panel, border: '1px solid ' + T.panelBorder,
           borderRadius: 6, padding: isPhone ? '12px 14px' : '16px 20px',
@@ -868,7 +760,7 @@ export default function Convergence() {
         display: 'grid',
         gridTemplateColumns: isDesktop ? `minmax(0, ${mapW + 40}px) 1fr` : '1fr',
         gap: isPhone ? 14 : 20,
-        padding: isPhone ? '0 18px 18px' : '0 48px 20px',
+        padding: '0 0 20px',
         alignItems: 'start',
       }}>
 
@@ -913,6 +805,7 @@ export default function Convergence() {
               const isSel = selectedEvent && selectedEvent.name === e.name;
               const dim = (mapHover && mapHover.event.name !== e.name) || (selectedEvent && !isSel);
               const isPV = e.cat === 'PV';
+              const isBlink = blinkEvents.has(e.name);
               const diamond = `${x},${y - rCore} ${x + rCore},${y} ${x},${y + rCore} ${x - rCore},${y}`;
               const haloDiamond = rHalo > rCore
                 ? `${x},${y - rHalo} ${x + rHalo},${y} ${x},${y + rHalo} ${x - rHalo},${y}` : null;
@@ -933,6 +826,11 @@ export default function Convergence() {
                         stroke={isSel ? T.text : 'none'} strokeWidth={isSel ? 1.5 : 0}/>
                     : <circle cx={x} cy={y} r={rCore} fill={col} opacity={dim ? 0.55 : 1}
                         stroke={isSel ? T.text : 'none'} strokeWidth={isSel ? 1.5 : 0}/>}
+                  {isBlink && (
+                    <circle key={blinkKey} cx={x} cy={y} r={rCore + 4}
+                      fill="none" stroke={col} strokeWidth={2}
+                      className="cv-blink-ring"/>
+                  )}
                 </g>
               );
             }))}
@@ -992,17 +890,20 @@ export default function Convergence() {
           {/* MAP LEGEND */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: isPhone ? '1fr' : 'auto auto auto',
-            gap: isPhone ? 16 : 36,
-            marginTop: 14, paddingTop: 14,
+            gridTemplateColumns: isPhone ? '1fr' : 'minmax(180px, 1fr) minmax(220px, 1fr) minmax(220px, 1fr)',
+            gap: isPhone ? 18 : 36,
+            marginTop: 16, paddingTop: 16,
             borderTop: '1px solid ' + T.rule,
             alignItems: 'start',
           }}>
-            {/* Shape = Category */}
+            {/* Category encoded by shape */}
             <div>
               <div className="cv-mono" style={{
-                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 12,
-              }}>SHAPE = CATEGORY</div>
+                fontSize: 9, letterSpacing: '.22em', color: T.text, marginBottom: 4,
+              }}>CATEGORY</div>
+              <div className="cv-mono" style={{
+                fontSize: 8.5, letterSpacing: '.18em', color: T.faint, marginBottom: 14,
+              }}>NOMINAL · ENCODED BY SHAPE</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <svg width="32" height="32" style={{ flexShrink: 0 }}>
@@ -1027,18 +928,21 @@ export default function Convergence() {
               </div>
             </div>
 
-            {/* Core Size = Killed */}
+            {/* Fatalities encoded by core radius */}
             <div>
               <div className="cv-mono" style={{
-                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 12,
-              }}>CORE SIZE = KILLED</div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: 64 }}>
+                fontSize: 9, letterSpacing: '.22em', color: T.text, marginBottom: 4,
+              }}>FATALITIES</div>
+              <div className="cv-mono" style={{
+                fontSize: 8.5, letterSpacing: '.18em', color: T.faint, marginBottom: 14,
+              }}>QUANTITATIVE · ENCODED BY CORE RADIUS · SQRT-SCALED</div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, height: 64 }}>
                 {[1e3, 1e5, 1e7, MAX_DEATHS].map(v => {
                   const r = radiusForDeaths(v);
                   return (
                     <div key={v} style={{
                       display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', gap: 6,
+                      alignItems: 'center', gap: 6, minWidth: r * 2,
                     }}>
                       <div style={{
                         width: r * 2, height: r * 2, borderRadius: '50%',
@@ -1053,18 +957,21 @@ export default function Convergence() {
               </div>
             </div>
 
-            {/* Halo Size = Displaced */}
+            {/* Displacement encoded by halo radius */}
             <div>
               <div className="cv-mono" style={{
-                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 12,
-              }}>HALO SIZE = DISPLACED</div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: 64 }}>
+                fontSize: 9, letterSpacing: '.22em', color: T.text, marginBottom: 4,
+              }}>DISPLACEMENT</div>
+              <div className="cv-mono" style={{
+                fontSize: 8.5, letterSpacing: '.18em', color: T.faint, marginBottom: 14,
+              }}>QUANTITATIVE · ENCODED BY HALO RADIUS · SQRT-SCALED</div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, height: 64 }}>
                 {[1e5, 1e6, 1e7].map(v => {
                   const r = radiusForDisplaced(v);
                   return (
                     <div key={v} style={{
                       display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', gap: 6,
+                      alignItems: 'center', gap: 6, minWidth: r * 2,
                     }}>
                       <div style={{
                         width: r * 2, height: r * 2, borderRadius: '50%',
@@ -1188,6 +1095,10 @@ export default function Convergence() {
                               setSelectedCell({ country: c, year: y }); setSelectedEvent(null);
                             }
                             setScrubYear(y);
+                            // Flash the corresponding map symbol(s) so the eye
+                            // can locate the event geographically after a grid
+                            // click. Re-fires every click via blinkKey.
+                            triggerBlink(evs.map(e => e.name));
                           }
                         }}
                         style={{
@@ -1265,7 +1176,7 @@ export default function Convergence() {
       })()}
 
       {/* DETAIL CARD */}
-      <div style={{ padding: isPhone ? '0 18px 32px' : '0 48px 40px' }}>
+      <div style={{ padding: isPhone ? '0 0 24px' : '0 0 32px' }}>
         <div style={{
           background: T.panel, border: '1px solid ' + T.panelBorder,
           borderRadius: 6, padding: isPhone ? '14px 16px' : '20px 24px', minHeight: 160,
@@ -1287,52 +1198,63 @@ export default function Convergence() {
                   fontSize: isPhone ? 22 : 30, color: T.headline, fontWeight: 500,
                   marginBottom: 4, lineHeight: 1.15,
                 }}>{e.name}</div>
-                <div className="cv-mono" style={{ fontSize: 10, color: T.mute, marginBottom: 14 }}>
+                <div className="cv-mono" style={{ fontSize: 10, color: T.mute, marginBottom: 18 }}>
                   {e.start === e.end ? e.start : `${e.start} to ${e.end}`} ({span} year{span > 1 ? 's' : ''}) · {e.countries.join(', ')}
                 </div>
 
-                {/* TWO-COLUMN BLOCK: stats on the left, media slot on the right.
-                    Right slot is reserved for a future photo or zoomed-in map view. */}
+                {/* Estimated Total Killed and Estimated Total Displaced
+                    side-by-side on the same line, full width above the
+                    description / media row. */}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isPhone ? '1fr 1fr' : '1fr 1fr',
+                  gap: isPhone ? 18 : 48,
+                  paddingBottom: 18, marginBottom: 18,
+                  borderBottom: '1px solid ' + T.rule,
+                }}>
+                  <Stat T={T} isPhone={isPhone}
+                    label="● ESTIMATED TOTAL KILLED"
+                    value={e.deaths}
+                    sub={`over ${span} year${span > 1 ? 's' : ''}`}
+                    color={T.accent}/>
+                  <Stat T={T} isPhone={isPhone}
+                    label="○ ESTIMATED TOTAL DISPLACED"
+                    value={e.displaced || '—'}
+                    sub={e.displaced ? `over ${span} year${span > 1 ? 's' : ''}` : 'no estimate'}/>
+                </div>
+
+                {/* Description on the left, media slot on the right —
+                    each takes exactly half so they never overlap. */}
                 <div style={{
                   display: 'grid',
                   gridTemplateColumns: isPhone ? '1fr' : '1fr 1fr',
-                  gap: isPhone ? 14 : 24,
-                  marginBottom: 18,
+                  gap: isPhone ? 18 : 28,
+                  alignItems: 'start',
                 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                    <Stat T={T} isPhone={isPhone}
-                      label="● TOTAL KILLED (FULL EVENT)"
-                      value={e.deaths}
-                      sub={`over ${span} year${span > 1 ? 's' : ''}`}
-                      color={T.accent}/>
-                    <Stat T={T} isPhone={isPhone}
-                      label="○ TOTAL DISPLACED (FULL EVENT)"
-                      value={e.displaced || '—'}
-                      sub={e.displaced ? `over ${span} year${span > 1 ? 's' : ''}` : 'no estimate'}/>
+                  <div className="cv-serif" style={{
+                    fontSize: isPhone ? 14.5 : 15.5, lineHeight: 1.6, color: T.text,
+                    minWidth: 0,
+                  }}>
+                    {renderBold(e.note, e.name)}
+                    {e.cites && e.cites.length > 0 && <Cite ids={e.cites}/>}
                   </div>
                   <div style={{
                     background: T.panelAlt,
                     border: '1px dashed ' + T.rule,
                     borderRadius: 4,
-                    minHeight: isPhone ? 140 : 200,
+                    minHeight: isPhone ? 140 : 240,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: 16,
+                    position: 'sticky', top: 18,
                   }}>
                     <span className="cv-mono" style={{
                       fontSize: 9, letterSpacing: '.22em', color: T.faint,
-                      textAlign: 'center', lineHeight: 1.6,
+                      textAlign: 'center', lineHeight: 1.7,
                     }}>
                       MEDIA SLOT<br/>
                       <span style={{ fontSize: 8.5 }}>PHOTO OR ZOOMED MAP</span>
                     </span>
                   </div>
-                </div>
-
-                <div className="cv-serif" style={{
-                  fontSize: isPhone ? 14.5 : 15.5, lineHeight: 1.6, color: T.text, maxWidth: 920,
-                }}>
-                  {renderBold(e.note, e.name)}
-                  {e.cites && e.cites.length > 0 && <ConvergenceCite ids={e.cites}/>}
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
                   <button onClick={() => setSelectedEvent(null)} className="cv-mono" style={{
@@ -1465,35 +1387,6 @@ export default function Convergence() {
   );
 }
 
-// ============================================================
-// ConvergenceCite — clickable inline superscript that navigates to
-// the Database view's references list at the matching anchor. The
-// references section was removed from this view at the user's
-// request; citations still work because the browser resolves the
-// URL fragment on load in the Database view.
-// ============================================================
-
-function ConvergenceCite({ ids }) {
-  return (
-    <sup style={{ fontSize: '0.7em', whiteSpace: 'nowrap', marginLeft: '1px' }}>
-      {ids.map((n, i) => (
-        <React.Fragment key={n}>
-          {i > 0 && <span style={{ color: 'var(--accent)' }}>,</span>}
-          <a
-            href={`?view=database#ref-${n}`}
-            style={{
-              color: 'var(--accent)',
-              textDecoration: 'none',
-              padding: '0 1px',
-              cursor: 'pointer',
-              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-            }}
-          >{n}</a>
-        </React.Fragment>
-      ))}
-    </sup>
-  );
-}
 
 // ============================================================
 // Subcomponents
