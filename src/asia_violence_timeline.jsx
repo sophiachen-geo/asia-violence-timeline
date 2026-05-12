@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useTheme } from './useTheme.js';
 
 const START_YEAR = 1945;
 const END_YEAR = 2026;
@@ -119,7 +120,17 @@ export const COUNTRY_REGION = {
   "Kuwait": "West Asia",
   "Oman": "West Asia",
   "Armenia": "West Asia",
-  "Azerbaijan": "West Asia"
+  "Azerbaijan": "West Asia",
+  // Countries that appear in EVENTS but were missing from the original
+  // map. Including the six Part II "exceptions" (no armed conflict
+  // and no political mass violence) so they classify correctly when
+  // referenced in cross-border events.
+  "Japan": "East Asia",
+  "Mongolia": "East Asia",
+  "Singapore": "Southeast Asia",
+  "Brunei": "Southeast Asia",
+  "Kazakhstan": "Central Asia",
+  "Turkmenistan": "Central Asia"
 };
 
 export const EVENTS = [
@@ -559,9 +570,9 @@ export function Cite({ ids }) {
     <sup style={{ fontSize: '0.7em', whiteSpace: 'nowrap', marginLeft: '1px' }}>
       {ids.map((n, i) => (
         <React.Fragment key={n}>
-          {i > 0 && <span style={{ color: '#b8956a' }}>,</span>}
+          {i > 0 && <span style={{ color: 'var(--accent)' }}>,</span>}
           <a href={'#ref-' + n} onClick={scrollToRef(n)} style={{
-            color: '#b8956a',
+            color: 'var(--accent)',
             textDecoration: 'none',
             padding: '0 1px',
             cursor: 'pointer',
@@ -577,7 +588,7 @@ function renderBold(text) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((part, i) => {
     if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} style={{ color: '#f1ead9', fontWeight: 500 }}>{part.slice(2, -2)}</strong>;
+      return <strong key={i} style={{ color: 'var(--text)', fontWeight: 500 }}>{part.slice(2, -2)}</strong>;
     }
     return <span key={i}>{part}</span>;
   });
@@ -681,8 +692,8 @@ function YearTicks({ yearStart, yearEnd }) {
     <div className="relative h-6 w-full">
       {marks.map((y) => (
         <div key={y} className="absolute top-0 h-full" style={{ left: ((y - yearStart) / range) * 100 + '%' }}>
-          <div className="h-3 w-px" style={{ backgroundColor: 'rgba(232,226,212,0.18)' }} />
-          <div className="mono text-[10px] -translate-x-1/2 mt-0.5" style={{ color: 'rgba(232,226,212,0.5)' }}>{y}</div>
+          <div className="h-3 w-px" style={{ backgroundColor: 'rgba(var(--text-rgb),0.18)' }} />
+          <div className="mono text-[10px] -translate-x-1/2 mt-0.5" style={{ color: 'rgba(var(--text-rgb),0.5)' }}>{y}</div>
         </div>
       ))}
     </div>
@@ -698,7 +709,7 @@ function DecadeLines({ yearStart, yearEnd }) {
     <>
       {marks.map((y) => (
         <div key={y} className="absolute top-0 bottom-0 w-px pointer-events-none"
-          style={{ left: ((y - yearStart) / range) * 100 + '%', backgroundColor: 'rgba(232,226,212,0.06)' }} />
+          style={{ left: ((y - yearStart) / range) * 100 + '%', backgroundColor: 'rgba(var(--text-rgb),0.06)' }} />
       ))}
     </>
   );
@@ -718,17 +729,17 @@ function EventRow({ ev, expanded, onToggle, yearStart, yearEnd }) {
   return (
     <div className="group">
       <button onClick={onToggle} className="w-full text-left flex items-stretch gap-3 py-2"
-        style={{ borderTop: '1px solid rgba(232,226,212,0.06)' }}>
+        style={{ borderTop: '1px solid rgba(var(--text-rgb),0.06)' }}>
         <div className="w-[44%] sm:w-[34%] shrink-0 pr-2">
-          <div className="serif text-[14px] sm:text-[15px] leading-tight flex items-center gap-2 flex-wrap" style={{ color: '#e8e2d4' }}>
+          <div className="serif text-[14px] sm:text-[15px] leading-tight flex items-center gap-2 flex-wrap" style={{ color: 'var(--text)' }}>
             {ev.name}
             {isPV && (
               <span className="mono text-[8px] px-1.5 py-0.5 rounded-sm" style={{
-                color: '#0e1118', backgroundColor: r.color, opacity: 0.85, letterSpacing: '0.05em'
+                color: 'var(--bg)', backgroundColor: r.color, opacity: 0.85, letterSpacing: '0.05em'
               }}>PV</span>
             )}
           </div>
-          <div className="mono text-[10px] mt-0.5" style={{ color: 'rgba(232,226,212,0.45)' }}>{yearLabel}</div>
+          <div className="mono text-[10px] mt-0.5" style={{ color: 'rgba(var(--text-rgb),0.45)' }}>{yearLabel}</div>
         </div>
         <div className="relative flex-1 min-h-[28px]">
           <DecadeLines yearStart={yearStart} yearEnd={yearEnd} />
@@ -753,9 +764,9 @@ function EventRow({ ev, expanded, onToggle, yearStart, yearEnd }) {
 
       {expanded && (
         <div className="pl-3 pr-2 pb-4 pt-2 text-[12.5px] leading-relaxed" style={{
-          color: 'rgba(232,226,212,0.85)', borderLeft: '2px solid ' + r.color, marginLeft: '4px', marginBottom: '4px',
+          color: 'rgba(var(--text-rgb),0.85)', borderLeft: '2px solid ' + r.color, marginLeft: '4px', marginBottom: '4px',
         }}>
-          <div className="mono text-[10px] mb-3 flex flex-wrap gap-x-3 gap-y-1" style={{ color: 'rgba(232,226,212,0.6)' }}>
+          <div className="mono text-[10px] mb-3 flex flex-wrap gap-x-3 gap-y-1" style={{ color: 'rgba(var(--text-rgb),0.6)' }}>
             <span>{ev.countries.join(' · ').toUpperCase()}</span>
             <span style={{ color: r.color }}>{ev.region.toUpperCase()}</span>
             <span>{ev.category.toUpperCase()}</span>
@@ -784,14 +795,14 @@ function YearRangeSlider({ value, onChange }) {
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
-        <div className="mono text-[10px] tracking-[0.2em]" style={{ color: 'rgba(232,226,212,0.55)' }}>YEAR RANGE</div>
-        <div className="mono text-[11px]" style={{ color: '#b8956a' }}>{lo} to {hi}</div>
+        <div className="mono text-[10px] tracking-[0.2em]" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>YEAR RANGE</div>
+        <div className="mono text-[11px]" style={{ color: 'var(--accent)' }}>{lo} to {hi}</div>
       </div>
       <div className="relative h-8 w-full">
         <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[3px] rounded"
-             style={{ backgroundColor: 'rgba(232,226,212,0.15)' }} />
+             style={{ backgroundColor: 'rgba(var(--text-rgb),0.15)' }} />
         <div className="absolute top-1/2 -translate-y-1/2 h-[3px] rounded"
-             style={{ left: pctLo + '%', width: (pctHi - pctLo) + '%', backgroundColor: '#b8956a' }} />
+             style={{ left: pctLo + '%', width: (pctHi - pctLo) + '%', backgroundColor: 'var(--accent)' }} />
         <input type="range" min={START_YEAR} max={END_YEAR} value={lo}
           onChange={(e) => { const v = parseInt(e.target.value, 10); if (v < hi) onChange([v, hi]); }}
           className="year-slider absolute inset-0 w-full appearance-none bg-transparent"
@@ -805,12 +816,12 @@ function YearRangeSlider({ value, onChange }) {
         .year-slider::-webkit-slider-thumb {
           pointer-events: auto; appearance: none;
           width: 18px; height: 18px; border-radius: 50%;
-          background: #f1ead9; border: 2px solid #b8956a; cursor: pointer;
+          background: var(--text); border: 2px solid var(--accent); cursor: pointer;
         }
         .year-slider::-moz-range-thumb {
           pointer-events: auto;
           width: 14px; height: 14px; border-radius: 50%;
-          background: #f1ead9; border: 2px solid #b8956a; cursor: pointer;
+          background: var(--text); border: 2px solid var(--accent); cursor: pointer;
         }
         .year-slider::-webkit-slider-runnable-track { background: transparent; }
         .year-slider::-moz-range-track { background: transparent; }
@@ -827,14 +838,14 @@ function CountryFilter({ active, onToggle, onSelectAll, onClearAll, onToggleRegi
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
-        <div className="mono text-[10px] tracking-[0.2em]" style={{ color: 'rgba(232,226,212,0.55)' }}>
+        <div className="mono text-[10px] tracking-[0.2em]" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>
           FILTER COUNTRIES · {active.size} of {ALL_COUNTRIES.length}
         </div>
         <div className="flex gap-2">
           <button onClick={onSelectAll} className="mono text-[10px] px-2 py-0.5 rounded"
-            style={{ color: '#b8956a', border: '1px solid rgba(184,149,106,0.35)' }}>ALL</button>
+            style={{ color: 'var(--accent)', border: '1px solid rgba(184,149,106,0.35)' }}>ALL</button>
           <button onClick={onClearAll} className="mono text-[10px] px-2 py-0.5 rounded"
-            style={{ color: 'rgba(232,226,212,0.5)', border: '1px solid rgba(232,226,212,0.15)' }}>NONE</button>
+            style={{ color: 'rgba(var(--text-rgb),0.5)', border: '1px solid rgba(var(--text-rgb),0.15)' }}>NONE</button>
         </div>
       </div>
       <div className="space-y-2">
@@ -855,8 +866,8 @@ function CountryFilter({ active, onToggle, onSelectAll, onClearAll, onToggleRegi
                       className="sans text-[11px] px-2 py-1 rounded-full"
                       style={{
                         backgroundColor: on ? r.soft : 'transparent',
-                        color: on ? '#f1ead9' : 'rgba(232,226,212,0.4)',
-                        border: '1px solid ' + (on ? r.ring : 'rgba(232,226,212,0.15)'),
+                        color: on ? 'var(--text)' : 'rgba(var(--text-rgb),0.4)',
+                        border: '1px solid ' + (on ? r.ring : 'rgba(var(--text-rgb),0.15)'),
                       }}>{c}</button>
                   );
                 })}
@@ -908,8 +919,8 @@ const ARCHETYPES = [
 
 function ExceptionsTable() {
   return (
-    <div className="my-6 border-y py-4" style={{ borderColor: 'rgba(232,226,212,0.12)' }}>
-      <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(232,226,212,0.55)' }}>
+    <div className="my-6 border-y py-4" style={{ borderColor: 'rgba(var(--text-rgb),0.12)' }}>
+      <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>
         THE SIX EXCEPTIONS · NO ARMED CONFLICT · NO POLITICAL MASS VIOLENCE
       </div>
       <div className="space-y-3">
@@ -918,20 +929,20 @@ function ExceptionsTable() {
           return (
             <div key={row.country}
               className="flex flex-wrap items-baseline gap-x-5 gap-y-1 pb-2"
-              style={{ borderBottom: '1px solid rgba(232,226,212,0.06)' }}>
+              style={{ borderBottom: '1px solid rgba(var(--text-rgb),0.06)' }}>
               <div className="flex items-center gap-2" style={{ minWidth: '120px' }}>
                 <span className="inline-block w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: r.color }} />
-                <span className="mono text-[9px] tracking-wider" style={{ color: 'rgba(232,226,212,0.5)' }}>
+                <span className="mono text-[9px] tracking-wider" style={{ color: 'rgba(var(--text-rgb),0.5)' }}>
                   {row.region.toUpperCase()}
                 </span>
               </div>
-              <div className="serif text-[15px] sm:text-[17px]" style={{ color: '#f1ead9', minWidth: '110px' }}>
+              <div className="serif text-[15px] sm:text-[17px]" style={{ color: 'var(--text)', minWidth: '110px' }}>
                 {row.country}
               </div>
-              <div className="mono text-[11px]" style={{ color: 'rgba(232,226,212,0.7)', minWidth: '70px' }}>
+              <div className="mono text-[11px]" style={{ color: 'rgba(var(--text-rgb),0.7)', minWidth: '70px' }}>
                 {row.population}
               </div>
-              <div className="sans text-[12px] sm:text-[13px] italic flex-1" style={{ color: 'rgba(232,226,212,0.8)' }}>
+              <div className="sans text-[12px] sm:text-[13px] italic flex-1" style={{ color: 'rgba(var(--text-rgb),0.8)' }}>
                 {row.reason}
               </div>
             </div>
@@ -946,7 +957,7 @@ function ArchetypesDiagram() {
   const accents = ['#c4615d', '#9683b8', '#5a8a85'];
   return (
     <div className="my-6">
-      <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(232,226,212,0.55)' }}>
+      <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>
         THREE PATHS TO PEACE · ONE CATEGORY PER COUNTRY
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
@@ -960,19 +971,19 @@ function ArchetypesDiagram() {
                 PATH {i + 1}
               </div>
               <h4 className="serif font-medium mb-3"
-                style={{ color: '#f1ead9', fontSize: '20px', lineHeight: 1.15 }}>
+                style={{ color: 'var(--text)', fontSize: '20px', lineHeight: 1.15 }}>
                 {a.name}
               </h4>
               <div className="w-12 h-px mb-3" style={{ backgroundColor: accent, opacity: 0.5 }} />
               <p className="sans text-[13px] leading-relaxed mb-5 flex-1"
-                style={{ color: 'rgba(232,226,212,0.78)' }}>
+                style={{ color: 'rgba(var(--text-rgb),0.78)' }}>
                 {a.mechanism}
               </p>
               <div className="mono text-[10px] tracking-[0.15em] mb-1.5"
-                style={{ color: 'rgba(232,226,212,0.5)' }}>
+                style={{ color: 'rgba(var(--text-rgb),0.5)' }}>
                 COUNTRIES
               </div>
-              <ul className="serif text-[15px] space-y-0.5" style={{ color: '#f1ead9' }}>
+              <ul className="serif text-[15px] space-y-0.5" style={{ color: 'var(--text)' }}>
                 {a.countries.map(c => <li key={c}>{c}</li>)}
               </ul>
             </div>
@@ -998,7 +1009,7 @@ function ImperialCircuitDiagram() {
   ];
   return (
     <div className="my-8">
-      <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(232,226,212,0.55)' }}>
+      <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>
         THREE MECHANISMS · LABOR EXTRACTION TO DISPLACEMENT TO ARRIVAL
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
@@ -1007,17 +1018,17 @@ function ImperialCircuitDiagram() {
             <div className="mono text-[10px] tracking-[0.1em] mb-2" style={{ color: p.color }}>
               {p.label}
             </div>
-            <div className="serif text-[17px] sm:text-[18px] mb-2" style={{ color: '#f1ead9', lineHeight: 1.2 }}>
+            <div className="serif text-[17px] sm:text-[18px] mb-2" style={{ color: 'var(--text)', lineHeight: 1.2 }}>
               {p.title}
             </div>
-            <div className="sans text-[12px] sm:text-[13px] leading-relaxed" style={{ color: 'rgba(232,226,212,0.72)' }}>
+            <div className="sans text-[12px] sm:text-[13px] leading-relaxed" style={{ color: 'rgba(var(--text-rgb),0.72)' }}>
               {p.desc}
             </div>
           </div>
         ))}
       </div>
       <p className="serif italic text-center text-[15px] sm:text-[17px] leading-snug max-w-2xl mx-auto"
-        style={{ color: '#f1ead9' }}>
+        style={{ color: 'var(--text)' }}>
         The arrival the heritage month celebrates is the same event as the departure each war produced.
       </p>
     </div>
@@ -1037,7 +1048,7 @@ function SubsectionHeading({ eyebrow, title }) {
           {eyebrow}
         </div>
       )}
-      <h3 className="serif" style={{ color: '#f1ead9', fontSize: '22px', lineHeight: 1.15, fontWeight: 500 }}>
+      <h3 className="serif" style={{ color: 'var(--text)', fontSize: '22px', lineHeight: 1.15, fontWeight: 500 }}>
         {title}
       </h3>
     </div>
@@ -1049,6 +1060,7 @@ function SubsectionHeading({ eyebrow, title }) {
 // ============================================================
 
 export default function AsiaViolenceTimeline() {
+  const [theme, setTheme] = useTheme();
   const [activeCountries, setActiveCountries] = useState(new Set(ALL_COUNTRIES));
   const [activeCategory, setActiveCategory] = useState("Both");
   const [groupBy, setGroupBy] = useState("region");
@@ -1123,38 +1135,68 @@ export default function AsiaViolenceTimeline() {
   // h3 (subsections): 22px ← set in SubsectionHeading above
 
   return (
-    <div className="min-h-screen w-full" style={{ backgroundColor: '#0e1118', color: '#e8e2d4' }}>
+    <div className="min-h-screen w-full" data-theme={theme} style={{
+      backgroundColor: 'var(--bg)',
+      color: 'var(--text)',
+      transition: 'background-color 180ms ease, color 180ms ease',
+    }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400&display=swap');
         .serif { font-family: 'Cormorant Garamond', Georgia, serif; }
         .sans  { font-family: 'DM Sans', system-ui, sans-serif; }
         .mono  { font-family: 'JetBrains Mono', ui-monospace, monospace; letter-spacing: 0.02em; }
+        [data-theme="dark"] {
+          --bg: #0e1118;
+          --text: #f1ead9;
+          --text-rgb: 232,226,212;
+          --accent: #b8956a;
+        }
+        [data-theme="light"] {
+          --bg: #f5f1e8;
+          --text: #231d14;
+          --text-rgb: 35,29,20;
+          --accent: #8b6a3f;
+        }
       `}</style>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12 relative">
         {/* HEADER */}
         <header className="mb-8 sm:mb-12">
           <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
-            <div className="mono text-[10px] tracking-[0.3em]" style={{ color: '#b8956a' }}>
+            <div className="mono text-[10px] tracking-[0.3em]" style={{ color: 'var(--accent)' }}>
               ASIA · 1945 TO 2026 · CONFLICT AND STATE VIOLENCE
             </div>
-            <a href="?view=convergence" className="mono text-[10px] tracking-[0.2em] px-3 py-1.5 rounded-full"
-              style={{
-                color: '#b8956a',
-                border: '1px solid rgba(184,149,106,0.45)',
-                textDecoration: 'none',
-                backgroundColor: 'rgba(184,149,106,0.06)',
-              }}>
-              TRY CONVERGENCE VIEW →
-            </a>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+                className="mono text-[10px] tracking-[0.2em] px-3 py-1.5 rounded-full"
+                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+                style={{
+                  color: 'var(--text)',
+                  border: '1px solid rgba(var(--text-rgb), 0.18)',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                }}>
+                {theme === 'dark' ? '☼ LIGHT' : '☾ DARK'}
+              </button>
+              <a href="?view=convergence" className="mono text-[10px] tracking-[0.2em] px-3 py-1.5 rounded-full"
+                style={{
+                  color: 'var(--accent)',
+                  border: '1px solid rgba(184,149,106,0.45)',
+                  textDecoration: 'none',
+                  backgroundColor: 'rgba(184,149,106,0.06)',
+                }}>
+                TRY CONVERGENCE VIEW →
+              </a>
+            </div>
           </div>
-          <h1 className="serif font-medium mb-3" style={{ color: '#f1ead9', fontSize: 'clamp(34px, 6vw, 52px)', lineHeight: 0.95 }}>
-            After <span style={{ fontStyle: 'italic', color: '#b8956a' }}>Empire</span>
+          <h1 className="serif font-medium mb-3" style={{ color: 'var(--text)', fontSize: 'clamp(34px, 6vw, 52px)', lineHeight: 0.95 }}>
+            After <span style={{ fontStyle: 'italic', color: 'var(--accent)' }}>Empire</span>
           </h1>
-          <p className="serif italic mb-7 max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)', fontSize: 'clamp(17px, 2.4vw, 22px)', lineHeight: 1.3 }}>
+          <p className="serif italic mb-7 max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)', fontSize: 'clamp(17px, 2.4vw, 22px)', lineHeight: 1.3 }}>
             Asia, Violence, and the Histories Behind Asian Heritage Month (1945&#x2013;2026)
           </p>
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               Asian Heritage Month is often organized around migration, contribution, resilience, and belonging. This project begins slightly earlier, with the historical conditions that made many migrations necessary in the first place.
             </p>
@@ -1180,26 +1222,26 @@ export default function AsiaViolenceTimeline() {
         </header>
 
         {/* STATS */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-5 mb-6 sm:mb-8 py-4 border-y" style={{ borderColor: 'rgba(232,226,212,0.12)' }}>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-5 mb-6 sm:mb-8 py-4 border-y" style={{ borderColor: 'rgba(var(--text-rgb),0.12)' }}>
           <div>
-            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: '#f1ead9' }}>{total}</div>
-            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(232,226,212,0.55)' }}>EVENTS</div>
+            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: 'var(--text)' }}>{total}</div>
+            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>EVENTS</div>
           </div>
           <div>
-            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: '#f1ead9' }}>{armed} / {pv}</div>
-            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(232,226,212,0.55)' }}>ARMED / POLITICAL</div>
+            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: 'var(--text)' }}>{armed} / {pv}</div>
+            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>ARMED / POLITICAL</div>
           </div>
           <div>
-            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: '#f1ead9' }}>~{formatNumber(totalDeaths)}</div>
-            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(232,226,212,0.55)' }}>EST. DEAD</div>
+            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: 'var(--text)' }}>~{formatNumber(totalDeaths)}</div>
+            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>EST. DEAD</div>
           </div>
           <div>
-            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: '#f1ead9' }}>~{formatNumber(totalDisplaced)}</div>
-            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(232,226,212,0.55)' }}>EST. DISPLACED</div>
+            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: 'var(--text)' }}>~{formatNumber(totalDisplaced)}</div>
+            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>EST. DISPLACED</div>
           </div>
           <div>
-            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: '#f1ead9' }}>{ongoing}</div>
-            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(232,226,212,0.55)' }}>ACTIVE IN 2026</div>
+            <div className="serif text-[24px] sm:text-[28px] leading-none" style={{ color: 'var(--text)' }}>{ongoing}</div>
+            <div className="mono text-[9px] sm:text-[10px] mt-1 tracking-wider" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>ACTIVE IN 2026</div>
           </div>
         </div>
 
@@ -1209,7 +1251,7 @@ export default function AsiaViolenceTimeline() {
 
           <div className="grid sm:grid-cols-2 gap-6">
             <div>
-              <div className="mono text-[10px] tracking-[0.2em] mb-2" style={{ color: 'rgba(232,226,212,0.55)' }}>CATEGORY</div>
+              <div className="mono text-[10px] tracking-[0.2em] mb-2" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>CATEGORY</div>
               <div className="flex flex-wrap gap-2">
                 {["Both", "Armed Conflict", "Political Violence"].map(cat => {
                   const on = activeCategory === cat;
@@ -1218,15 +1260,15 @@ export default function AsiaViolenceTimeline() {
                       className="sans text-[12px] px-3 py-1.5 rounded-full"
                       style={{
                         backgroundColor: on ? 'rgba(184,149,106,0.16)' : 'transparent',
-                        color: on ? '#f1ead9' : 'rgba(232,226,212,0.4)',
-                        border: '1px solid ' + (on ? 'rgba(184,149,106,0.45)' : 'rgba(232,226,212,0.15)'),
+                        color: on ? 'var(--text)' : 'rgba(var(--text-rgb),0.4)',
+                        border: '1px solid ' + (on ? 'rgba(184,149,106,0.45)' : 'rgba(var(--text-rgb),0.15)'),
                       }}>{cat}</button>
                   );
                 })}
               </div>
             </div>
             <div>
-              <div className="mono text-[10px] tracking-[0.2em] mb-2" style={{ color: 'rgba(232,226,212,0.55)' }}>GROUP BY</div>
+              <div className="mono text-[10px] tracking-[0.2em] mb-2" style={{ color: 'rgba(var(--text-rgb),0.55)' }}>GROUP BY</div>
               <div className="flex flex-wrap gap-2">
                 {[{k: "region", l: "Region"}, {k: "country", l: "Country"}].map(g => {
                   const on = groupBy === g.k;
@@ -1235,8 +1277,8 @@ export default function AsiaViolenceTimeline() {
                       className="sans text-[12px] px-3 py-1.5 rounded-full"
                       style={{
                         backgroundColor: on ? 'rgba(184,149,106,0.16)' : 'transparent',
-                        color: on ? '#f1ead9' : 'rgba(232,226,212,0.4)',
-                        border: '1px solid ' + (on ? 'rgba(184,149,106,0.45)' : 'rgba(232,226,212,0.15)'),
+                        color: on ? 'var(--text)' : 'rgba(var(--text-rgb),0.4)',
+                        border: '1px solid ' + (on ? 'rgba(184,149,106,0.45)' : 'rgba(var(--text-rgb),0.15)'),
                       }}>{g.l}</button>
                   );
                 })}
@@ -1255,7 +1297,7 @@ export default function AsiaViolenceTimeline() {
 
         {/* TIMELINE */}
         {total === 0 ? (
-          <div className="py-12 text-center mono text-[12px]" style={{ color: 'rgba(232,226,212,0.5)' }}>
+          <div className="py-12 text-center mono text-[12px]" style={{ color: 'rgba(var(--text-rgb),0.5)' }}>
             No events match the current filters.
           </div>
         ) : groupBy === "region" ? (
@@ -1267,7 +1309,7 @@ export default function AsiaViolenceTimeline() {
                 <section key={region}>
                   <div className="flex items-baseline justify-between mb-3 pb-2" style={{ borderBottom: '1px solid ' + r.ring }}>
                     <h2 className="serif" style={{ color: r.color, fontSize: 'clamp(20px, 3vw, 26px)' }}>{region}</h2>
-                    <span className="mono text-[10px]" style={{ color: 'rgba(232,226,212,0.45)' }}>{events.length} {events.length === 1 ? 'event' : 'events'}</span>
+                    <span className="mono text-[10px]" style={{ color: 'rgba(var(--text-rgb),0.45)' }}>{events.length} {events.length === 1 ? 'event' : 'events'}</span>
                   </div>
                   <div className="flex gap-3 mb-1">
                     <div className="w-[44%] sm:w-[34%] shrink-0" />
@@ -1291,7 +1333,7 @@ export default function AsiaViolenceTimeline() {
                 <section key={country}>
                   <div className="flex items-baseline justify-between mb-3 pb-2" style={{ borderBottom: '1px solid ' + r.ring }}>
                     <h2 className="serif" style={{ color: r.color, fontSize: 'clamp(20px, 3vw, 26px)' }}>{country}</h2>
-                    <span className="mono text-[10px]" style={{ color: 'rgba(232,226,212,0.45)' }}>{data.region.toUpperCase()} · {data.events.length} {data.events.length === 1 ? 'event' : 'events'}</span>
+                    <span className="mono text-[10px]" style={{ color: 'rgba(var(--text-rgb),0.45)' }}>{data.region.toUpperCase()} · {data.events.length} {data.events.length === 1 ? 'event' : 'events'}</span>
                   </div>
                   <div className="flex gap-3 mb-1">
                     <div className="w-[44%] sm:w-[34%] shrink-0" />
@@ -1313,15 +1355,15 @@ export default function AsiaViolenceTimeline() {
         {/* PART II                                                         */}
         {/* ============================================================ */}
         <section className="mt-20 sm:mt-24">
-          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: '#b8956a' }}>PART II</div>
-          <h2 className="serif font-medium mb-6" style={{ color: '#f1ead9', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
+          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: 'var(--accent)' }}>PART II</div>
+          <h2 className="serif font-medium mb-6" style={{ color: 'var(--text)', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
             The Conditions of Peace
           </h2>
 
           <SubsectionHeading eyebrow="GEOGRAPHY" title="Security, geography, and the uneven distribution of stability" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
-              One of the clearest patterns visible across postwar Asia is not simply the recurrence of violence, but its uneven distribution. Across the eighty years recorded in this timeline, large parts of the continent moved through repeated cycles of war, partition, insurgency, occupation, dictatorship, and political repression. Yet a small number of states have no entry in the catalogue under either the armed-conflict or the political mass violence classification. Six countries belong to this group: <strong style={{ color: '#f1ead9' }}>Japan, Mongolia, Singapore, Brunei, Kazakhstan, and Turkmenistan</strong>.
+              One of the clearest patterns visible across postwar Asia is not simply the recurrence of violence, but its uneven distribution. Across the eighty years recorded in this timeline, large parts of the continent moved through repeated cycles of war, partition, insurgency, occupation, dictatorship, and political repression. Yet a small number of states have no entry in the catalogue under either the armed-conflict or the political mass violence classification. Six countries belong to this group: <strong style={{ color: 'var(--text)' }}>Japan, Mongolia, Singapore, Brunei, Kazakhstan, and Turkmenistan</strong>.
             </p>
             <p>
               The list is shorter than the popular narrative usually suggests. Bhutan is sometimes named informally as a model of peace, particularly in tourism literature and in some summary comparative-politics accounts. The historical record does not sustain the claim. Between 1990 and 1993, the Bhutanese state's <em>One Nation, One People</em> policy and the 1985 Citizenship Act produced a campaign that forcibly displaced approximately 108,000 ethnic Nepali Lhotshampa, documented by Human Rights Watch as ethnic cleansing.<Cite ids={[59]}/> The Maldives appears in the catalogue for the 1988 coup attempt. Uzbekistan appears for the 2005 Andijan massacre and the 2010 Kyrgyz-Uzbek violence. The six genuine exceptions are clarifying precisely because the list is short.
@@ -1330,21 +1372,21 @@ export default function AsiaViolenceTimeline() {
 
           <ExceptionsTable />
 
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl mt-2" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl mt-2" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The significance of these cases lies less in any inherent cultural disposition toward peace than in the structural conditions that made relative stability possible. The absence of major war did not necessarily imply liberal democracy, political openness, or equality. Singapore combined stability with highly securitized governance and extensive restrictions on opposition politics.<Cite ids={[48]}/> Mongolia remained deeply constrained by Soviet influence throughout much of the Cold War.<Cite ids={[49]}/> Postwar Japan developed under extensive American military protection despite constitutional restrictions on warfare.<Cite ids={[50]}/> The central question is therefore not why some Asian societies were naturally peaceful, but how peace itself became historically sustainable under particular geopolitical conditions.
             </p>
           </div>
 
           <SubsectionHeading eyebrow="QUALIFICATION" title="A note on Singapore" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The early years of Singapore's modern statehood were not, in fact, free of organized violence. The communal riots of July and September 1964 produced approximately thirty-six deaths and more than five hundred injuries on the island. The Indonesia&#x2013;Malaysia Confrontation (Konfrontasi, 1963 to 1966) brought direct attacks on Singapore, including the MacDonald House bombing of March 10, 1965, which killed three civilians and wounded thirty-three. What the catalogue records, and what the comparative-politics literature largely identifies as the <em>Singaporean peace</em>, is the period after independence in August 1965, during which the post-separation Singaporean state has experienced no significant internal armed conflict or large-scale political violence. The earlier turbulence is part of the same history as the later stability; the stability did not erase what came before it, and an honest framing of Singapore as an exception requires this qualification.
             </p>
           </div>
 
           <SubsectionHeading eyebrow="THREE PATHS" title="Three paths to peace" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The six cases divide cleanly into three archetypes rather than into a checklist of overlapping conditions. Each country fits exactly one archetype. The typology is more analytically useful than a count of which structural conditions any given country exhibits, partly because the cases are too few for cumulative conditions to discriminate among them, and partly because the underlying mechanisms differ in kind, not merely in degree.
             </p>
@@ -1352,28 +1394,28 @@ export default function AsiaViolenceTimeline() {
 
           <ArchetypesDiagram />
 
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl mt-2" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl mt-2" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
-              <strong style={{ color: '#f1ead9' }}>Constitutional alliance.</strong> Japan is the only case in this archetype. Article 9 of the 1947 Constitution constitutes the explicit renunciation of war as a sovereign right; the 1960 Treaty of Mutual Cooperation and Security between the United States and Japan constitutes the implicit subcontract through which the defense function was delegated.<Cite ids={[52, 53]}/> The combination was unusual then, and it remains unusual now. Every other Asian state with comparable industrial weight retained military projection as a sovereign function. Japan delegated it. John Dower's <em>Embracing Defeat</em> traces the immediate postwar conditions under which the delegation was institutionalized &#x2014; the dense interweaving of American occupation policy with Japanese reform politics, and the way in which a defeated, devastated society negotiated the terms of its own reconstruction under foreign supervision.<Cite ids={[50]}/> Chalmers Johnson's <em>MITI and the Japanese Miracle</em> documents the developmental architecture that grew within the security shadow this arrangement provided, and the way that architecture produced the postwar Japanese economy in something close to its present form.<Cite ids={[51]}/> The resulting peace was real. It was not, in any straightforward sense, a peace of Japan's own unilateral making.
+              <strong style={{ color: 'var(--text)' }}>Constitutional alliance.</strong> Japan is the only case in this archetype. Article 9 of the 1947 Constitution constitutes the explicit renunciation of war as a sovereign right; the 1960 Treaty of Mutual Cooperation and Security between the United States and Japan constitutes the implicit subcontract through which the defense function was delegated.<Cite ids={[52, 53]}/> The combination was unusual then, and it remains unusual now. Every other Asian state with comparable industrial weight retained military projection as a sovereign function. Japan delegated it. John Dower's <em>Embracing Defeat</em> traces the immediate postwar conditions under which the delegation was institutionalized &#x2014; the dense interweaving of American occupation policy with Japanese reform politics, and the way in which a defeated, devastated society negotiated the terms of its own reconstruction under foreign supervision.<Cite ids={[50]}/> Chalmers Johnson's <em>MITI and the Japanese Miracle</em> documents the developmental architecture that grew within the security shadow this arrangement provided, and the way that architecture produced the postwar Japanese economy in something close to its present form.<Cite ids={[51]}/> The resulting peace was real. It was not, in any straightforward sense, a peace of Japan's own unilateral making.
             </p>
             <p>
-              <strong style={{ color: '#f1ead9' }}>Geographic buffer.</strong> Mongolia, Kazakhstan, and Turkmenistan occupy this archetype. Each sits between major powers whose direct confrontation across the territory would not, on calculation, be resolved by absorbing the buffer state, and each pairs that geographic position with alignment to the regional security provider. Mongolia held a Soviet-aligned posture through 1990 and a balanced one since, on the long arc that Morris Rossabi traces from khans through commissars to capitalists.<Cite ids={[49]}/> Kazakhstan and Turkmenistan emerged from the Soviet dissolution into a regional system in which Russia retained the principal security role and the new states retained the option of close economic ties to China and the West simultaneously. The buffer logic has held, so far, in all three cases. A qualification is required: authoritarian opacity in Kazakhstan and Turkmenistan means their inclusion among the exceptions depends on the absence of <em>documented</em> mass violence rather than on the <em>proven absence</em> of mass violence. The classification is the most defensible one available, but it is a classification under epistemic constraint, and readers are asked to keep this in view.
+              <strong style={{ color: 'var(--text)' }}>Geographic buffer.</strong> Mongolia, Kazakhstan, and Turkmenistan occupy this archetype. Each sits between major powers whose direct confrontation across the territory would not, on calculation, be resolved by absorbing the buffer state, and each pairs that geographic position with alignment to the regional security provider. Mongolia held a Soviet-aligned posture through 1990 and a balanced one since, on the long arc that Morris Rossabi traces from khans through commissars to capitalists.<Cite ids={[49]}/> Kazakhstan and Turkmenistan emerged from the Soviet dissolution into a regional system in which Russia retained the principal security role and the new states retained the option of close economic ties to China and the West simultaneously. The buffer logic has held, so far, in all three cases. A qualification is required: authoritarian opacity in Kazakhstan and Turkmenistan means their inclusion among the exceptions depends on the absence of <em>documented</em> mass violence rather than on the <em>proven absence</em> of mass violence. The classification is the most defensible one available, but it is a classification under epistemic constraint, and readers are asked to keep this in view.
             </p>
             <p>
-              <strong style={{ color: '#f1ead9' }}>Small sheltered economy.</strong> Singapore and Brunei share this archetype. Both are small enough that their absorption into a major-power calculation would yield little relative to its cost. Both maintain functional security relationships &#x2014; Singapore through ASEAN, an active citizen army, and the Five Power Defence Arrangements with the United Kingdom, Australia, New Zealand, and Malaysia; Brunei through residual British arrangements that survived its 1984 independence. Both run economies whose returns from trade integration substantially exceed any plausible returns from territorial assertion. Meredith Weiss's <em>The Roots of Resilience</em>, published by Cornell University Press in 2020, frames Singapore &#x2014; together with Malaysia &#x2014; as an electoral-authoritarian hybrid regime in which authoritarian acculturation, patronage, and the depth of party-state grassroots machines sustain regime durability across successive cycles of contestation.<Cite ids={[48]}/> Brunei's smallness and the longevity of its dynastic-monarchical arrangements have, in their own way, produced an equivalent insulation.
+              <strong style={{ color: 'var(--text)' }}>Small sheltered economy.</strong> Singapore and Brunei share this archetype. Both are small enough that their absorption into a major-power calculation would yield little relative to its cost. Both maintain functional security relationships &#x2014; Singapore through ASEAN, an active citizen army, and the Five Power Defence Arrangements with the United Kingdom, Australia, New Zealand, and Malaysia; Brunei through residual British arrangements that survived its 1984 independence. Both run economies whose returns from trade integration substantially exceed any plausible returns from territorial assertion. Meredith Weiss's <em>The Roots of Resilience</em>, published by Cornell University Press in 2020, frames Singapore &#x2014; together with Malaysia &#x2014; as an electoral-authoritarian hybrid regime in which authoritarian acculturation, patronage, and the depth of party-state grassroots machines sustain regime durability across successive cycles of contestation.<Cite ids={[48]}/> Brunei's smallness and the longevity of its dynastic-monarchical arrangements have, in their own way, produced an equivalent insulation.
             </p>
           </div>
 
           <SubsectionHeading eyebrow="DEBATE" title="Frameworks in dialogue" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               It should be acknowledged that the framework presented here &#x2014; peace as a function of external security architecture, strategic insulation, and the geopolitical calculations of larger actors &#x2014; is not the only academic framework available, and that other scholars have weighted the causes differently. Timo Kivim&#xE4;ki and Stein T&#xF8;nnesson have argued, in extended work, for what they call a <em>developmental peace</em> in East Asia: a regional shift in elite priorities toward economic development over warfare, supported by ASEAN's principle of non-intervention, by the prioritization of welfare over warfare in the major Asian capitalist economies, and by what they have called an <em>ASEAN/Chinese Way</em> of conducting interstate relations. The two frameworks are not mutually exclusive. Developmental priorities flourish under external security guarantees, and security guarantees are sustained in part by the resulting economic interdependence. But the frameworks emphasize different causal mechanisms, and the one offered here weights the structural-geopolitical mechanism more heavily &#x2014; while acknowledging that the developmental-peace argument captures something real about how peace was reproduced, year over year, once the structural conditions were in place.
             </p>
           </div>
 
           <SubsectionHeading eyebrow="SYNTHESIS" title="What produces peace" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
-            <p style={{ color: '#f1ead9' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
+            <p style={{ color: 'var(--text)' }}>
               The pattern that emerges across all six cases is consistent. Peace in Asia since 1945 has rarely been a matter of unilateral domestic choice. It has required occupying one of three positions in which the cost of violence to a larger actor exceeds the benefit &#x2014; and the larger actor's calculation has done a great deal of the work that the smaller state's domestic politics is sometimes credited with. This is not a counsel of fatalism, and it is not an argument that peaceful states have no agency. It is a recognition that the small number of peaceful trajectories in postwar Asia rests on conditions that were not, in their origins, of those states' own unilateral making. Where these conditions held, peace held with them. Where they did not, peace did not.
             </p>
           </div>
@@ -1383,13 +1425,13 @@ export default function AsiaViolenceTimeline() {
         {/* PART III                                                        */}
         {/* ============================================================ */}
         <section className="mt-20 sm:mt-24">
-          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: '#b8956a' }}>PART III</div>
-          <h2 className="serif font-medium mb-6" style={{ color: '#f1ead9', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
+          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: 'var(--accent)' }}>PART III</div>
+          <h2 className="serif font-medium mb-6" style={{ color: 'var(--text)', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
             Empire, Migration, and Memory
           </h2>
 
           <SubsectionHeading eyebrow="OPENING" title="Imperialism, conflict, and the histories behind Heritage Month" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The relationship between the conflicts represented in this timeline and the communities commemorated each May in Canada and the United States runs through a broader historical circuit linking empire, labor, war, migration, exclusion, and memory. This is not a relationship that the Heritage Month commemorations typically name in their official iterations. Yet much of what is being commemorated only exists because of what came before it.
             </p>
@@ -1410,7 +1452,7 @@ export default function AsiaViolenceTimeline() {
           <ImperialCircuitDiagram />
 
           <SubsectionHeading eyebrow="MECHANISM ONE" title="The first mechanism: imperial labor extraction" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The first historical mechanism connecting Asia to North America was imperial labor extraction. Chinese migration accelerated through railway construction, mining economies, plantation systems, and the Gold Rush labor markets of the nineteenth century. Stanford's Chinese Railroad Workers in North America Project estimates that fifteen to twenty thousand Chinese migrants laid the tracks of the western Central Pacific portion of the Transcontinental Railroad, completed at Promontory Summit in Utah on May 10, 1869. (The eastward Union Pacific track was built largely by Irish, German, and other European immigrants, by formerly enslaved Black workers, and by Mormon contractors.) South Asian migration to North America emerged from the British imperial labor circuits that moved Indian workers across the empire and across the Pacific world. Filipino migration expanded under American colonial rule after the annexation of the Philippines in 1898. Japanese migration to Hawai&#x2018;i and the Pacific coast developed through plantation recruitment systems tied to expanding imperial-commercial networks. The first recorded Japanese resident in the United States, Manjiro Nakahama, arrived at New Bedford on May 6, 1843, on the whaling vessel that had rescued him from a shipwreck; federal commemorative materials use May 7.<Cite ids={[54]}/>
             </p>
@@ -1420,7 +1462,7 @@ export default function AsiaViolenceTimeline() {
           </div>
 
           <SubsectionHeading eyebrow="MECHANISM TWO" title="The second mechanism: violent decolonization" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The second mechanism was violent decolonization. A striking proportion of the conflicts represented in this timeline trace directly to imperial dissolution and to the borders, populations, and unresolved questions that imperial powers left behind.
             </p>
@@ -1433,7 +1475,7 @@ export default function AsiaViolenceTimeline() {
           </div>
 
           <SubsectionHeading eyebrow="MECHANISM THREE" title="The third mechanism: refugee production and immigration reform" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The third mechanism was the synchronization of refugee production with immigration reform in North America. The United States Immigration and Nationality Act of 1965, often referred to as Hart-Celler, and Canada's introduction of a points-based immigration system through Order-in-Council PC 1967-1616 in August 1967, dismantled much of the explicit racial architecture that had previously restricted Asian migration. These reforms coincided historically with decades during which Asia generated some of the largest refugee flows in the world.
             </p>
@@ -1446,7 +1488,7 @@ export default function AsiaViolenceTimeline() {
           </div>
 
           <SubsectionHeading eyebrow="REBUILDING" title="Reconstruction" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               Yet the history that emerges from this circuit cannot be understood only through rupture. The same communities shaped by displacement, exclusion, and migration have also transformed the societies they entered. Asian communities across Canada and the United States built businesses, labor networks, cultural institutions, religious organizations, political movements, artistic traditions, research institutions, scholarly disciplines, and forms of community care that have become inseparable from North American life.<Cite ids={[54]}/> Asian Heritage Month exists, in part, because these histories were too important to remain peripheral to the national stories that produced them.
             </p>
@@ -1456,14 +1498,14 @@ export default function AsiaViolenceTimeline() {
           </div>
 
           <SubsectionHeading eyebrow="CLOSING" title="What the holiday holds, and what it misses" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The standard institutional form of the commemoration tends to celebrate the arrival without commemorating the departure. It tells a story of contribution, belonging, and resilience, but it elides the imperial and military circuits through which many of the underlying displacements occurred. The month is not dishonest. It is incomplete, in a manner that mirrors the incomplete public memory of decolonization and the Cold War more generally.
             </p>
             <p>
               A more rigorous version of the commemoration would hold two recognitions together rather than one. It would acknowledge that the cuisine, the languages, the literatures, the kinship networks, the religious traditions, and the families being celebrated are not separable from the displacements that brought many of them to the host country &#x2014; and that the displacements themselves were not random events but were substantially produced by policies and conflicts whose continuities extend into the present.
             </p>
-            <p style={{ color: '#f1ead9' }}>
+            <p style={{ color: 'var(--text)' }}>
               To remember the violence that shaped postwar Asia is not to reduce Asian history to violence. It is to understand more fully the scale of what people survived, what they rebuilt, what they carried forward, and what they created afterward.
             </p>
           </div>
@@ -1473,20 +1515,20 @@ export default function AsiaViolenceTimeline() {
         {/* PART IV                                                         */}
         {/* ============================================================ */}
         <section className="mt-20 sm:mt-24">
-          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: '#b8956a' }}>PART IV</div>
-          <h2 className="serif font-medium mb-6" style={{ color: '#f1ead9', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
+          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: 'var(--accent)' }}>PART IV</div>
+          <h2 className="serif font-medium mb-6" style={{ color: 'var(--text)', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
             Methodology, Caveats, and Uncertainties
           </h2>
 
           <SubsectionHeading eyebrow="CITATION" title="Citation system" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               This project uses a numeric reference system in the Vancouver style. Every claim attributable to a specific source carries a superscript number in the text, and the full bibliographic entry appears in the numbered list at the end of the page. Clicking any superscript scrolls directly to the matching reference; the destination row briefly highlights, so that the eye can locate it. The numbering is consistent across event tooltips and analytical text &#x2014; reference 18, for example, is Talbot and Singh's <em>The Partition of India</em> wherever it appears.
             </p>
           </div>
 
           <SubsectionHeading eyebrow="METHODOLOGY" title="Classification and counting" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The catalogue distinguishes two analytical categories. <em>Armed Conflict</em> includes interstate wars, civil wars, sustained insurgencies, and short but consequential conventional clashes; these appear in the timeline as solid bars. <em>Political Mass Violence</em> includes state repression, politicide, ethnic cleansing, genocide, policy-induced famine, and systematic detention; these appear as patterned bars marked with a PV badge. Where analytically warranted, sub-events such as the Yazidi genocide and the Mullivaikkal mass killing are treated alongside their parent conflicts rather than as separate entries. The geographic scope follows the conventional United Nations Asia scheme, including the South Caucasus and including the Soviet Union only where it appears as an external actor in conflicts whose opponent is an Asian state &#x2014; the Sino-Soviet Border Conflict and the Soviet-Afghan War. Casualty and displacement figures are mid-range estimates drawn from the cited sources. The cumulative displacement total double-counts individuals displaced more than once. This is a known feature of the methodology rather than an error.
             </p>
@@ -1499,7 +1541,7 @@ export default function AsiaViolenceTimeline() {
           </div>
 
           <SubsectionHeading eyebrow="CAVEATS" title="Five categories of uncertainty" />
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
             <p>
               The casualty figures presented throughout are mid-range estimates. The certainty conveyed by any single number frequently exceeds the certainty that the underlying historiography supports, and readers are asked to keep this in view.
             </p>
@@ -1518,7 +1560,7 @@ export default function AsiaViolenceTimeline() {
             <p>
               The fifth concerns <em>the ongoing nature of certain events</em>. The Xinjiang campaign, the North Korean <em>kwalliso</em> system, the Falun Gong persecution, the Myanmar military's repression, the West Papua conflict, and the Israeli operations in Gaza and Lebanon as of May 2026 are not closed historical events. Their casualty and displacement figures are running totals that may change substantially in the coming years, and their political characterization is, in many cases, the subject of ongoing international litigation and diplomatic dispute.<Cite ids={[27, 33, 42]}/>
             </p>
-            <p style={{ color: '#f1ead9' }}>
+            <p style={{ color: 'var(--text)' }}>
               The compiled total of approximately seventy million dead across all events is anchored substantially by Chinese political campaigns and famines, which alone account for 35 to 55 million. The right inference from these numbers is structural rather than precise. The human cost of state and inter-state violence in Asia since 1945 is of an order of magnitude that warrants the same kind of sustained public recognition that the European twentieth century has received &#x2014; even where the precise figure for any particular event remains contested.
             </p>
           </div>
@@ -1528,8 +1570,8 @@ export default function AsiaViolenceTimeline() {
         {/* REFERENCES                                                      */}
         {/* ============================================================ */}
         <section className="mt-20 sm:mt-24">
-          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: '#b8956a' }}>REFERENCES</div>
-          <h2 className="serif font-medium mb-6" style={{ color: '#f1ead9', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
+          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: 'var(--accent)' }}>REFERENCES</div>
+          <h2 className="serif font-medium mb-6" style={{ color: 'var(--text)', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
             Citation Reference List
           </h2>
           {(() => {
@@ -1542,20 +1584,20 @@ export default function AsiaViolenceTimeline() {
               { startAt: 63, label: "Heritage Month institutional history" },
             ];
             return (
-              <ol className="sans text-[12px] sm:text-[13px] leading-relaxed" style={{ color: 'rgba(232,226,212,0.75)' }}>
+              <ol className="sans text-[12px] sm:text-[13px] leading-relaxed" style={{ color: 'rgba(var(--text-rgb),0.75)' }}>
                 {CITATIONS.map(c => {
                   const section = REF_SECTIONS.find(s => s.startAt === c.n);
                   return (
                     <React.Fragment key={c.n}>
                       {section && (
                         <li className="mono text-[10px] tracking-[0.25em] mt-6 mb-2 px-2"
-                          style={{ color: '#b8956a', listStyle: 'none' }}>
+                          style={{ color: 'var(--accent)', listStyle: 'none' }}>
                           {section.label.toUpperCase()}
                         </li>
                       )}
                       <li id={'ref-' + c.n} className="flex gap-3 px-2 py-1"
-                        style={{ scrollMarginTop: '2rem', borderBottom: '1px solid rgba(232,226,212,0.04)' }}>
-                        <span className="mono shrink-0" style={{ color: '#b8956a', minWidth: '28px' }}>{c.n}.</span>
+                        style={{ scrollMarginTop: '2rem', borderBottom: '1px solid rgba(var(--text-rgb),0.04)' }}>
+                        <span className="mono shrink-0" style={{ color: 'var(--accent)', minWidth: '28px' }}>{c.n}.</span>
                         <span className="flex-1 min-w-0">
                           {c.text}{' '}
                           <a href={c.url} target="_blank" rel="noopener noreferrer"

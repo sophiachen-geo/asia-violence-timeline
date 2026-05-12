@@ -18,12 +18,12 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   EVENTS as RAW_EVENTS,
-  REGIONS as ESSAY_REGIONS,
   COUNTRY_REGION,
   CITATIONS,
   Cite,
 } from './asia_violence_timeline.jsx';
 import { COUNTRY_COORDS } from './data/country_coords.js';
+import { useTheme } from './useTheme.js';
 
 // ============================================================
 // Helpers
@@ -139,14 +139,8 @@ export default function Convergence() {
     return a;
   }, []);
 
-  // ── theme ──────────────────────────────────────────────────────
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') return 'dark';
-    return localStorage.getItem('avt-convergence-theme') || 'dark';
-  });
-  useEffect(() => {
-    if (typeof window !== 'undefined') localStorage.setItem('avt-convergence-theme', theme);
-  }, [theme]);
+  // ── theme (shared with the essay) ──────────────────────────────
+  const [theme, setTheme] = useTheme();
 
   const T = theme === 'dark' ? {
     bg:           '#0e1118',
@@ -184,8 +178,21 @@ export default function Convergence() {
     tooltipBorder:'rgba(45,40,30,0.22)',
   };
 
-  // Region colors come from the essay's REGIONS map (single source of truth).
-  const regions = ESSAY_REGIONS;
+  // Region colors are theme-aware and chosen for clear discrimination
+  // (East and West Asia were too close in red in the original palette).
+  const regions = theme === 'dark' ? {
+    "West Asia":      { color: "#d05a3c" }, // terracotta
+    "Central Asia":   { color: "#8a6dc4" }, // violet
+    "South Asia":     { color: "#e0b341" }, // gold
+    "Southeast Asia": { color: "#4ea58d" }, // jade
+    "East Asia":      { color: "#3f7fbf" }, // slate blue
+  } : {
+    "West Asia":      { color: "#a8442a" },
+    "Central Asia":   { color: "#5b4690" },
+    "South Asia":     { color: "#b78018" },
+    "Southeast Asia": { color: "#2c7a63" },
+    "East Asia":      { color: "#2c5d96" },
+  };
 
   // ── state ──────────────────────────────────────────────────────
   const [cat, setCat] = useState('Both');
@@ -213,9 +220,15 @@ export default function Convergence() {
   const isDesktop = vw >= 1100;
 
   // Country list shown in dropdown is tied to active region filter.
+  // Country-to-region uses the canonical COUNTRY_REGION map from the
+  // source dataset (NOT inferred from each event's region) so that, for
+  // example, Vietnam stays in Southeast Asia even when it appears in an
+  // East Asia event like the Sino-Vietnamese War.
   const COUNTRY_BY_REGION = useMemo(() => {
     const m = {};
-    EVENTS.forEach(e => e.countries.forEach(c => { if (!m[c]) m[c] = e.region; }));
+    EVENTS.forEach(e => e.countries.forEach(c => {
+      if (!m[c]) m[c] = COUNTRY_REGION[c] || e.region;
+    }));
     return m;
   }, []);
   const ALL_COUNTRIES = useMemo(() =>
@@ -250,7 +263,9 @@ export default function Convergence() {
 
   const countryRegion = useMemo(() => {
     const m = {};
-    events.forEach(e => e.countries.forEach(c => { if (!m[c]) m[c] = e.region; }));
+    events.forEach(e => e.countries.forEach(c => {
+      if (!m[c]) m[c] = COUNTRY_REGION[c] || e.region;
+    }));
     return m;
   }, [events]);
   const countries = useMemo(() =>
@@ -623,11 +638,48 @@ export default function Convergence() {
             </button>
           </div>
 
-          {/* TIME PERIOD */}
+          {/* TWO-COLUMN STATS */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isPhone ? '1fr' : '1fr 1fr',
+            gap: isPhone ? 14 : 24, alignItems: 'stretch',
+          }}>
+            <StatsColumn
+              T={T} isPhone={isPhone}
+              heading={`WITHIN PERIOD · ${yearRange[0]} TO ${yearRange[1]}`}
+              subheading="Events in the catalogue overlapping this range. Death and displacement figures are listed per event, exactly as recorded."
+              items={[
+                { label: 'Events overlapping range', value: periodTotals.evCount, big: true, color: T.accent },
+                { label: 'Armed conflict', value: periodTotals.events.filter(e => e.cat === 'AC').length },
+                { label: 'Political violence', value: periodTotals.events.filter(e => e.cat === 'PV').length },
+              ]}
+            />
+            <StatsColumn
+              T={T} isPhone={isPhone}
+              heading={`IN ${scrubYear} ONLY`}
+              subheading="Number of catalogue events whose duration covers this year."
+              tone="alt"
+              items={[
+                { label: 'Events active', value: activeInYear.length, big: true, color: T.accent },
+                { label: 'Armed conflict', value: activeInYear.filter(e => e.cat === 'AC').length },
+                { label: 'Political violence', value: activeInYear.filter(e => e.cat === 'PV').length },
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* TIME PERIOD + HISTOGRAM (kept together) */}
+      <div style={{ padding: isPhone ? '0 18px 14px' : '0 48px 18px' }}>
+        <div style={{
+          background: T.panel, border: '1px solid ' + T.panelBorder,
+          borderRadius: 6, padding: isPhone ? '12px 14px' : '16px 20px',
+        }}>
+          {/* TIME PERIOD slider */}
           <div style={{ marginBottom: 18 }}>
             <div className="cv-mono" style={{
               fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 10,
-              display: 'flex', justifyContent: 'space-between',
+              display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6,
             }}>
               <span>TIME PERIOD · DRAG HANDLES TO TRIM</span>
               <span style={{ color: T.text, fontVariantNumeric: 'tabular-nums' }}>
@@ -691,43 +743,7 @@ export default function Convergence() {
             </div>
           </div>
 
-          {/* TWO-COLUMN STATS */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isPhone ? '1fr' : '1fr 1fr',
-            gap: isPhone ? 14 : 24, alignItems: 'stretch',
-          }}>
-            <StatsColumn
-              T={T} isPhone={isPhone}
-              heading={`WITHIN PERIOD · ${yearRange[0]} TO ${yearRange[1]}`}
-              subheading="Events in the catalogue overlapping this range. Death and displacement figures are listed per event, exactly as recorded."
-              items={[
-                { label: 'Events overlapping range', value: periodTotals.evCount, big: true, color: T.accent },
-                { label: 'Armed conflict', value: periodTotals.events.filter(e => e.cat === 'AC').length },
-                { label: 'Political violence', value: periodTotals.events.filter(e => e.cat === 'PV').length },
-              ]}
-            />
-            <StatsColumn
-              T={T} isPhone={isPhone}
-              heading={`IN ${scrubYear} ONLY`}
-              subheading="Number of catalogue events whose duration covers this year."
-              tone="alt"
-              items={[
-                { label: 'Events active', value: activeInYear.length, big: true, color: T.accent },
-                { label: 'Armed conflict', value: activeInYear.filter(e => e.cat === 'AC').length },
-                { label: 'Political violence', value: activeInYear.filter(e => e.cat === 'PV').length },
-              ]}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* YEAR SCRUBBER + HISTOGRAM */}
-      <div style={{ padding: isPhone ? '0 18px 14px' : '0 48px 18px' }}>
-        <div style={{
-          background: T.panel, border: '1px solid ' + T.panelBorder,
-          borderRadius: 6, padding: isPhone ? '12px 14px' : '14px 18px',
-        }}>
+          {/* HISTOGRAM header */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             gap: 14, marginBottom: 12, flexWrap: 'wrap',
@@ -805,7 +821,11 @@ export default function Convergence() {
               const [x, y] = project(COUNTRY_COORDS[c].lon, COUNTRY_COORDS[c].lat);
               const rCore = radiusForDeaths(e.deathsEst);
               const rHalo = radiusForDisplaced(e.displacedEst || 0);
-              const col = regions[e.region].color;
+              // Color by COUNTRY's region, not event's, so Vietnam plotted
+              // for the Sino-Vietnamese War shows as Southeast Asia jade
+              // rather than East Asia blue.
+              const cReg = COUNTRY_REGION[c] || e.region;
+              const col = regions[cReg].color;
               const isSel = selectedEvent && selectedEvent.name === e.name;
               const dim = (mapHover && mapHover.event.name !== e.name) || (selectedEvent && !isSel);
               const isPV = e.cat === 'PV';
@@ -853,20 +873,25 @@ export default function Convergence() {
           {mapHover && (
             <div style={{
               position: 'absolute',
-              left: Math.min(mapHover.x + 14, mapW - 240),
+              left: Math.min(mapHover.x + 14, mapW - 280),
               top: Math.max(40, mapHover.y - 10),
               background: T.tooltipBg, border: '1px solid ' + T.tooltipBorder,
               borderRadius: 4, padding: '10px 12px', pointerEvents: 'none',
-              minWidth: 200, maxWidth: 240, boxShadow: '0 4px 16px rgba(0,0,0,.25)', zIndex: 10,
+              minWidth: 220, maxWidth: 280,
+              boxShadow: '0 4px 16px rgba(0,0,0,.25)', zIndex: 10,
+              wordBreak: 'break-word', overflowWrap: 'anywhere',
             }}>
               <div className="cv-mono" style={{
                 fontSize: 8.5, letterSpacing: '.22em',
                 color: regions[mapHover.event.region].color, marginBottom: 4,
+                whiteSpace: 'normal',
               }}>
                 {mapHover.event.cat === 'PV' ? 'POLITICAL VIOLENCE' : 'ARMED CONFLICT'} · {mapHover.event.region.toUpperCase()}
               </div>
               <div className="cv-serif" style={{
-                fontSize: 15, fontWeight: 500, color: T.text, lineHeight: 1.2, marginBottom: 6,
+                fontSize: 15, fontWeight: 500, color: T.text,
+                lineHeight: 1.25, marginBottom: 6,
+                whiteSpace: 'normal', wordBreak: 'break-word',
               }}>{mapHover.event.name}</div>
               <div className="cv-mono" style={{ fontSize: 9.5, color: T.mute, marginBottom: 8 }}>
                 {mapHover.event.start === mapHover.event.end
@@ -882,64 +907,110 @@ export default function Convergence() {
 
           {/* MAP LEGEND */}
           <div style={{
-            display: 'flex', gap: isPhone ? 14 : 22, marginTop: 14, paddingTop: 12,
-            borderTop: '1px solid ' + T.rule, flexWrap: 'wrap', alignItems: 'flex-end',
+            display: 'grid',
+            gridTemplateColumns: isPhone ? '1fr' : 'auto auto auto',
+            gap: isPhone ? 16 : 36,
+            marginTop: 14, paddingTop: 14,
+            borderTop: '1px solid ' + T.rule,
+            alignItems: 'start',
           }}>
+            {/* Shape = Category */}
             <div>
               <div className="cv-mono" style={{
-                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 8,
+                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 12,
               }}>SHAPE = CATEGORY</div>
-              <svg width="170" height="36" style={{ display: 'block' }}>
-                <circle cx={18} cy={16} r={9} fill={T.accent}/>
-                <text x={34} y={20} fontSize="11" fill={T.text} fontFamily="'DM Sans'">Armed</text>
-                {(() => {
-                  const x = 100, y = 16, r = 9;
-                  const pts = `${x},${y - r} ${x + r},${y} ${x},${y + r} ${x - r},${y}`;
-                  return <polygon points={pts} fill={T.accent}/>;
-                })()}
-                <text x={116} y={20} fontSize="11" fill={T.text} fontFamily="'DM Sans'">Political</text>
-              </svg>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <svg width="32" height="32" style={{ flexShrink: 0 }}>
+                    <circle cx={16} cy={16} r={13} fill={T.accent}/>
+                  </svg>
+                  <span className="cv-serif" style={{ fontSize: 14, color: T.text }}>
+                    Armed Conflict
+                  </span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <svg width="32" height="32" style={{ flexShrink: 0 }}>
+                    {(() => {
+                      const x = 16, y = 16, r = 13;
+                      const pts = `${x},${y - r} ${x + r},${y} ${x},${y + r} ${x - r},${y}`;
+                      return <polygon points={pts} fill={T.accent}/>;
+                    })()}
+                  </svg>
+                  <span className="cv-serif" style={{ fontSize: 14, color: T.text }}>
+                    Political Violence
+                  </span>
+                </div>
+              </div>
             </div>
+
+            {/* Core Size = Killed */}
             <div>
               <div className="cv-mono" style={{
-                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 8,
+                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 12,
               }}>CORE SIZE = KILLED</div>
-              <svg width="220" height="42" style={{ display: 'block' }}>
-                {[1e3, 1e5, 1e7, MAX_DEATHS].map((v, i, arr) => {
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: 64 }}>
+                {[1e3, 1e5, 1e7, MAX_DEATHS].map(v => {
                   const r = radiusForDeaths(v);
-                  const cx = arr.slice(0, i).reduce((s, vv) => s + radiusForDeaths(vv) * 2 + 14, r + 6);
                   return (
-                    <g key={v}>
-                      <circle cx={cx} cy={20} r={r} fill={T.accent}/>
-                      <text x={cx} y={40} fontSize="9" fill={T.mute}
-                        fontFamily="'JetBrains Mono'" textAnchor="middle">{fmt(v)}</text>
-                    </g>
+                    <div key={v} style={{
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', gap: 6,
+                    }}>
+                      <div style={{
+                        width: r * 2, height: r * 2, borderRadius: '50%',
+                        background: T.accent,
+                      }}/>
+                      <span className="cv-mono" style={{
+                        fontSize: 9, color: T.mute, fontVariantNumeric: 'tabular-nums',
+                      }}>{fmt(v)}</span>
+                    </div>
                   );
                 })}
-              </svg>
+              </div>
             </div>
+
+            {/* Halo Size = Displaced */}
             <div>
               <div className="cv-mono" style={{
-                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 8,
+                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 12,
               }}>HALO SIZE = DISPLACED</div>
-              <svg width="220" height="42" style={{ display: 'block' }}>
-                {[1e5, 1e6, 1e7].map((v, i, arr) => {
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, height: 64 }}>
+                {[1e5, 1e6, 1e7].map(v => {
                   const r = radiusForDisplaced(v);
-                  const cx = arr.slice(0, i).reduce((s, vv) => s + radiusForDisplaced(vv) * 2 + 14, r + 6);
                   return (
-                    <g key={v}>
-                      <circle cx={cx} cy={20} r={r} fill={T.accent} opacity=".22"/>
-                      <circle cx={cx} cy={20} r={3} fill={T.accent}/>
-                      <text x={cx} y={40} fontSize="9" fill={T.mute}
-                        fontFamily="'JetBrains Mono'" textAnchor="middle">{fmt(v)}</text>
-                    </g>
+                    <div key={v} style={{
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', gap: 6,
+                    }}>
+                      <div style={{
+                        width: r * 2, height: r * 2, borderRadius: '50%',
+                        position: 'relative',
+                      }}>
+                        <div style={{
+                          position: 'absolute', inset: 0, borderRadius: '50%',
+                          background: T.accent, opacity: 0.22,
+                        }}/>
+                        <div style={{
+                          position: 'absolute', top: '50%', left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          width: 6, height: 6, borderRadius: '50%',
+                          background: T.accent,
+                        }}/>
+                      </div>
+                      <span className="cv-mono" style={{
+                        fontSize: 9, color: T.mute, fontVariantNumeric: 'tabular-nums',
+                      }}>{fmt(v)}</span>
+                    </div>
                   );
                 })}
-              </svg>
+              </div>
             </div>
+
             {pinnedCountry && (
               <button onClick={() => setPinnedCountry(null)} className="cv-mono" style={{
-                marginLeft: 'auto', background: 'transparent', color: T.accent,
+                gridColumn: '1 / -1',
+                justifySelf: 'end',
+                background: 'transparent', color: T.accent,
                 border: '1px solid ' + T.accent, padding: '4px 10px',
                 fontSize: 9, letterSpacing: '.2em', borderRadius: 99, cursor: 'pointer',
               }}>
@@ -1135,21 +1206,44 @@ export default function Convergence() {
                 <div className="cv-mono" style={{ fontSize: 10, color: T.mute, marginBottom: 14 }}>
                   {e.start === e.end ? e.start : `${e.start} to ${e.end}`} ({span} year{span > 1 ? 's' : ''}) · {e.countries.join(', ')}
                 </div>
+
+                {/* TWO-COLUMN BLOCK: stats on the left, media slot on the right.
+                    Right slot is reserved for a future photo or zoomed-in map view. */}
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: isPhone ? '1fr 1fr' : 'repeat(2, auto)',
-                  gap: isPhone ? 14 : 56, marginBottom: 16,
+                  gridTemplateColumns: isPhone ? '1fr' : '1fr 1fr',
+                  gap: isPhone ? 14 : 24,
+                  marginBottom: 18,
                 }}>
-                  <Stat T={T} isPhone={isPhone}
-                    label="● TOTAL KILLED (FULL EVENT)"
-                    value={e.deaths}
-                    sub={`over ${span} year${span > 1 ? 's' : ''}`}
-                    color={T.accent}/>
-                  <Stat T={T} isPhone={isPhone}
-                    label="○ TOTAL DISPLACED (FULL EVENT)"
-                    value={e.displaced || '—'}
-                    sub={e.displaced ? `over ${span} year${span > 1 ? 's' : ''}` : 'no estimate'}/>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    <Stat T={T} isPhone={isPhone}
+                      label="● TOTAL KILLED (FULL EVENT)"
+                      value={e.deaths}
+                      sub={`over ${span} year${span > 1 ? 's' : ''}`}
+                      color={T.accent}/>
+                    <Stat T={T} isPhone={isPhone}
+                      label="○ TOTAL DISPLACED (FULL EVENT)"
+                      value={e.displaced || '—'}
+                      sub={e.displaced ? `over ${span} year${span > 1 ? 's' : ''}` : 'no estimate'}/>
+                  </div>
+                  <div style={{
+                    background: T.panelAlt,
+                    border: '1px dashed ' + T.rule,
+                    borderRadius: 4,
+                    minHeight: isPhone ? 140 : 200,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: 16,
+                  }}>
+                    <span className="cv-mono" style={{
+                      fontSize: 9, letterSpacing: '.22em', color: T.faint,
+                      textAlign: 'center', lineHeight: 1.6,
+                    }}>
+                      MEDIA SLOT<br/>
+                      <span style={{ fontSize: 8.5 }}>PHOTO OR ZOOMED MAP</span>
+                    </span>
+                  </div>
                 </div>
+
                 <div className="cv-serif" style={{
                   fontSize: isPhone ? 14.5 : 15.5, lineHeight: 1.6, color: T.text, maxWidth: 920,
                 }}>
