@@ -370,7 +370,7 @@ export default function Convergence() {
   // the right and top edges.
   const minLon = 22, maxLon = 152, minLat = -18, maxLat = 64;
   const mapAspect = (maxLon - minLon) / (maxLat - minLat); // ≈ 1.585
-  const mapW = isPhone ? Math.min(vw - 48, 480) : isTablet ? Math.min(vw - 80, 660) : 760;
+  const mapW = isPhone ? Math.min(vw - 48, 480) : isTablet ? Math.min(vw - 80, 540) : 580;
   const mapH = mapW / mapAspect;
   const project = (lon, lat) => [
     ((lon - minLon) / (maxLon - minLon)) * mapW,
@@ -465,8 +465,9 @@ export default function Convergence() {
 
   return (
     <div style={{
-      background: 'transparent', color: T.text,
+      background: T.bg, color: T.text,
       fontFamily: "'DM Sans', system-ui, sans-serif",
+      transition: 'background-color 180ms ease, color 180ms ease',
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400&display=swap');

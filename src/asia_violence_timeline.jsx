@@ -1190,15 +1190,6 @@ export default function AsiaViolenceTimeline() {
                 }}>
                 {theme === 'dark' ? '☼ LIGHT' : '☾ DARK'}
               </button>
-              <a href="?" className="mono text-[10px] tracking-[0.2em] px-3 py-1.5 rounded-full"
-                style={{
-                  color: 'var(--accent)',
-                  border: '1px solid rgba(184,149,106,0.45)',
-                  textDecoration: 'none',
-                  backgroundColor: 'rgba(184,149,106,0.06)',
-                }}>
-                ← CONVERGENCE VIEW
-              </a>
             </div>
           </div>
           <h1 className="serif font-medium mb-3" style={{ color: 'var(--text)', fontSize: 'clamp(34px, 6vw, 52px)', lineHeight: 0.95 }}>
