@@ -4,3 +4,6 @@ dist
 *.local
 .env
 *.tsbuildinfo
+
+# Local-only outbound patch files (see .unpushed-commits/README.md)
+.unpushed-commits/
