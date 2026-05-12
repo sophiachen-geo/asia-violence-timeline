@@ -490,10 +490,10 @@ export default function Convergence() {
   const yrToPct = (y) => ((y - START_YEAR) / (END_YEAR - START_YEAR)) * 100;
 
   // ── Tooltip move handlers ────────────────────────────────────
-  const onSymbolMove = (ev, e) => {
+  const onSymbolMove = (ev, e, country) => {
     const r = mapRef.current && mapRef.current.getBoundingClientRect();
     if (!r) return;
-    setMapHover({ event: e, x: ev.clientX - r.left, y: ev.clientY - r.top });
+    setMapHover({ event: e, country, x: ev.clientX - r.left, y: ev.clientY - r.top });
   };
   const onCellMove = (ev, country, year) => {
     setGridHover({ country, year, x: ev.clientX, y: ev.clientY });
@@ -594,16 +594,27 @@ export default function Convergence() {
                     <div style={{
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                       padding: '10px 12px', borderBottom: '1px solid ' + T.rule, flexShrink: 0,
+                      gap: 8,
                     }}>
                       <span className="cv-mono" style={{ fontSize: 9, color: T.faint, letterSpacing: '.22em' }}>
                         {ALL_COUNTRIES.length} COUNTRIES
                       </span>
-                      {countrySet.size > 0 && (
-                        <button onClick={() => setCountrySet(new Set())} className="cv-mono" style={{
-                          background: 'none', border: 'none', color: T.accent, fontSize: 9,
-                          cursor: 'pointer', letterSpacing: '.15em',
-                        }}>CLEAR</button>
-                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {countrySet.size > 0 && (
+                          <button onClick={() => setCountrySet(new Set())} className="cv-mono" style={{
+                            background: 'none', border: 'none', color: T.accent, fontSize: 9,
+                            cursor: 'pointer', letterSpacing: '.15em',
+                          }}>CLEAR</button>
+                        )}
+                        <button onClick={() => setCountryMenuOpen(false)}
+                          aria-label="Close country picker"
+                          className="cv-mono" style={{
+                            background: 'none', border: '1px solid ' + T.rule, color: T.mute,
+                            fontSize: 11, lineHeight: 1, cursor: 'pointer',
+                            width: 20, height: 20, borderRadius: 99,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>✕</button>
+                      </div>
                     </div>
                     <div style={{
                       display: 'flex', flexDirection: 'column', gap: 2,
@@ -678,8 +689,8 @@ export default function Convergence() {
               const acCount = periodTotals.events.filter(e => e.cat === 'AC').length;
               const pvCount = periodTotals.events.filter(e => e.cat === 'PV').length;
               const total = { label: 'Events overlapping range', value: periodTotals.evCount, big: true, color: T.accent };
-              const deaths = { label: 'Estimated dead', value: fmtCompact(periodTotals.deathsSum) };
-              const displaced = { label: 'Estimated displaced', value: fmtCompact(periodTotals.displacedSum) };
+              const deaths = { label: 'Estimated total dead', value: fmtCompact(periodTotals.deathsSum) };
+              const displaced = { label: 'Estimated total displaced', value: fmtCompact(periodTotals.displacedSum) };
               if (cat === 'AC') return [total, { label: 'Armed conflict', value: acCount }, deaths, displaced];
               if (cat === 'PV') return [total, { label: 'Political violence', value: pvCount }, deaths, displaced];
               return [
@@ -776,21 +787,15 @@ export default function Convergence() {
             <div className="cv-mono" style={{ fontSize: 9, letterSpacing: '.22em', color: T.faint }}>
               WHEN IT HAPPENED · CLICK A BAR TO FOCUS A YEAR · PLAY STEPS THROUGH CONCURRENT EVENTS
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <button onClick={() => setPlaying(p => !p)} className="cv-mono" style={{
-                background: playing ? T.accent : 'transparent',
-                color: playing ? T.accentInk : T.accent,
-                border: '1px solid ' + T.accent,
-                padding: '6px 14px', fontSize: 10, letterSpacing: '.2em',
-                borderRadius: 99, cursor: 'pointer', flexShrink: 0,
-              }}>
-                {playing ? '■ PAUSE' : '▶ PLAY'}
-              </button>
-              <span className="cv-serif" style={{
-                fontSize: isPhone ? 22 : 28, fontWeight: 500, color: T.text,
-                fontVariantNumeric: 'tabular-nums', minWidth: 64,
-              }}>{scrubYear}</span>
-            </div>
+            <button onClick={() => setPlaying(p => !p)} className="cv-mono" style={{
+              background: playing ? T.accent : 'transparent',
+              color: playing ? T.accentInk : T.accent,
+              border: '1px solid ' + T.accent,
+              padding: '6px 14px', fontSize: 10, letterSpacing: '.2em',
+              borderRadius: 99, cursor: 'pointer', flexShrink: 0,
+            }}>
+              {playing ? '■ PAUSE' : '▶ PLAY'}
+            </button>
           </div>
           <YearHistogram
             T={T}
@@ -802,32 +807,37 @@ export default function Convergence() {
             isPhone={isPhone}
           />
 
-          {/* YEARLY STATS · directly under the histogram, stat set mirrors the within-period set */}
-          <div style={{ marginTop: 14 }}>
-            <StatsColumn
-              T={T} isPhone={isPhone}
-              heading={`IN ${scrubYear} ONLY`}
-              subheading="Catalogue events whose duration covers this year. Estimated dead and displaced are summed across those events."
-              tone="alt"
-              items={(() => {
-                const acCount = activeInYear.filter(e => e.cat === 'AC').length;
-                const pvCount = activeInYear.filter(e => e.cat === 'PV').length;
-                const deathsSum = activeInYear.reduce((s, e) => s + (e.deathsEst || 0), 0);
-                const displacedSum = activeInYear.reduce((s, e) => s + (e.displacedEst || 0), 0);
-                const total = { label: 'Events active', value: activeInYear.length, big: true, color: T.accent };
-                const deaths = { label: 'Estimated dead', value: fmtCompact(deathsSum) };
-                const displaced = { label: 'Estimated displaced', value: fmtCompact(displacedSum) };
-                if (cat === 'AC') return [total, { label: 'Armed conflict', value: acCount }, deaths, displaced];
-                if (cat === 'PV') return [total, { label: 'Political violence', value: pvCount }, deaths, displaced];
-                return [
-                  total,
-                  { label: 'Armed conflict', value: acCount },
-                  { label: 'Political violence', value: pvCount },
-                  deaths,
-                  displaced,
-                ];
-              })()}
-            />
+          {/* YEARLY STATS · breakdown for the selected year, sans heading/total
+              (year is already shown on the histogram bar; total would repeat it). */}
+          <div style={{
+            marginTop: 14, paddingTop: 12, borderTop: '1px solid ' + T.rule,
+            display: 'flex', gap: isPhone ? 16 : 28, flexWrap: 'wrap', alignItems: 'baseline',
+          }}>
+            {(() => {
+              const acCount = activeInYear.filter(e => e.cat === 'AC').length;
+              const pvCount = activeInYear.filter(e => e.cat === 'PV').length;
+              const deathsSum = activeInYear.reduce((s, e) => s + (e.deathsEst || 0), 0);
+              const displacedSum = activeInYear.reduce((s, e) => s + (e.displacedEst || 0), 0);
+              const ac = { label: 'Armed conflict', value: acCount };
+              const pv = { label: 'Political violence', value: pvCount };
+              const dead = { label: 'Estimated total dead', value: fmtCompact(deathsSum) };
+              const displaced = { label: 'Estimated total displaced', value: fmtCompact(displacedSum) };
+              const items =
+                cat === 'AC' ? [ac, dead, displaced] :
+                cat === 'PV' ? [pv, dead, displaced] :
+                [ac, pv, dead, displaced];
+              return items.map(it => (
+                <div key={it.label} style={{ minWidth: 90 }}>
+                  <div className="cv-serif" style={{
+                    fontSize: isPhone ? 18 : 22, fontWeight: 500, lineHeight: 1,
+                    color: T.text, fontVariantNumeric: 'tabular-nums',
+                  }}>{it.value}</div>
+                  <div className="cv-mono" style={{
+                    fontSize: 9, color: T.mute, marginTop: 4, letterSpacing: '.04em',
+                  }}>{it.label}</div>
+                </div>
+              ));
+            })()}
           </div>
         </div>
       </div>
@@ -969,7 +979,7 @@ export default function Convergence() {
                 ? `${x},${y - rHalo} ${x + rHalo},${y} ${x},${y + rHalo} ${x - rHalo},${y}` : null;
               return (
                 <g key={`${e.name}-${c}`} className="cv-sym"
-                   onMouseMove={(ev) => onSymbolMove(ev, e)}
+                   onMouseMove={(ev) => onSymbolMove(ev, e, c)}
                    onMouseLeave={() => setMapHover(null)}
                    onClick={() => { setSelectedEvent(e); setSelectedCell(null); }}
                    role="button"
@@ -1021,7 +1031,12 @@ export default function Convergence() {
           </div>
 
           {/* MAP TOOLTIP */}
-          {mapHover && (
+          {mapHover && (() => {
+            const popupRegion = mapHover.country
+              ? (COUNTRY_REGION[mapHover.country] || mapHover.event.region)
+              : mapHover.event.region;
+            const popupColor = regions[popupRegion].color;
+            return (
             <div style={{
               position: 'absolute',
               left: Math.min(mapHover.x + 14, mapW - 280),
@@ -1034,10 +1049,10 @@ export default function Convergence() {
             }}>
               <div className="cv-mono" style={{
                 fontSize: 8.5, letterSpacing: '.22em',
-                color: regions[mapHover.event.region].color, marginBottom: 4,
+                color: popupColor, marginBottom: 4,
                 whiteSpace: 'normal',
               }}>
-                {mapHover.event.cat === 'PV' ? 'POLITICAL VIOLENCE' : 'ARMED CONFLICT'} · {mapHover.event.region.toUpperCase()}
+                {mapHover.event.cat === 'PV' ? 'POLITICAL VIOLENCE' : 'ARMED CONFLICT'}{mapHover.country ? ` · ${mapHover.country.toUpperCase()}` : ''}
               </div>
               <div className="cv-serif" style={{
                 fontSize: 15, fontWeight: 500, color: T.text,
@@ -1054,7 +1069,8 @@ export default function Convergence() {
                 <Row T={T} mark="○" label="Displaced" value={fmtFigure(mapHover.event.displaced, mapHover.event.ongoing)}/>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* MAP LEGEND */}
           <div style={{

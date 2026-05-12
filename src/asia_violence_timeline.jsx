@@ -1378,35 +1378,6 @@ export default function AsiaViolenceTimeline() {
               </p>
             </IntroSection>
 
-            <IntroSection eyebrow="SCOPE">
-              <p>
-                This project gathers interstate wars, occupations, insurgencies, politicide, ethnic cleansing, state repression, detention systems, and campaigns of mass political violence across Asia from 1945 to 2026. Solid bars represent armed conflict. Patterned bars represent large-scale political repression, state terror, forced displacement, or mass violence directed primarily against civilian populations.<Cite ids={[1, 2, 3, 60, 61, 62]}/>
-              </p>
-            </IntroSection>
-
-            <IntroSection eyebrow="SOURCES">
-              <p>
-                Event entries are compiled from the institutional conflict datasets <strong>UCDP</strong>, <strong>PRIO</strong>, and <strong>ACLED</strong>; <strong>UN Commission of Inquiry</strong> reports and OHCHR documentation; academic monographs and peer-reviewed mortality studies; <strong>Human Rights Watch</strong> and <strong>Amnesty International</strong> country investigations; and contemporary reporting where the situation is still developing. Every claim attributable to a specific source carries a superscript number that scrolls to the full bibliographic entry in the references list at the foot of the page.<Cite ids={[1, 2, 3, 4, 6, 7, 8, 9]}/>
-              </p>
-            </IntroSection>
-
-            <IntroSection eyebrow={`DATA AS OF ${DATA_AS_OF.toUpperCase()}`}>
-              <p>
-                Figures for ongoing events &#x2014; marked with a trailing <strong>+</strong> on the death and displacement counts &#x2014; are running totals through {DATA_AS_OF} and will change. The list of conflicts currently treated as ongoing includes the Israeli operations in Gaza and Lebanon, the 2026 Iran war, the Myanmar post-coup civil war, the Afghanistan&#x2013;Pakistan war, the West Papua conflict, the Xinjiang campaign, the North Korean <em>kwalliso</em> system, and the Falun Gong persecution.
-              </p>
-            </IntroSection>
-
-            <IntroSection eyebrow="RUSSIA AND THE USSR">
-              <p>
-                The geographic scope follows the United Nations Asia scheme. <strong>Russia and the Soviet Union appear only where they act inside Asia against an Asian state</strong> &#x2014; the Sino&#x2013;Soviet Border Conflict of 1969 and the Soviet&#x2013;Afghan War of 1979 to 1989. Internal Soviet repression, the Chechen wars, and post-Soviet Russian conflicts outside the UN Asia scheme are not included. Soviet involvement as an external sponsor in Asian wars (Korea, Vietnam, the Cold War proxy network) is treated within the entry on each Asian conflict, not as a separate Russian event.
-              </p>
-            </IntroSection>
-
-            <IntroSection eyebrow="LIMITS">
-              <p>
-                The categories are necessarily imperfect. Many events move across the boundary between war and state violence. Casualty figures likewise remain contested. The estimates presented throughout are drawn from academic literature, institutional datasets, demographic studies, legal investigations, and historical scholarship, and should be read as historical approximations rather than definitive totals.<Cite ids={[47]}/>
-              </p>
-            </IntroSection>
 
             <section className="mt-8 mb-2">
               <div className="mono text-[10px] tracking-[0.25em] mb-3"
@@ -1451,6 +1422,38 @@ export default function AsiaViolenceTimeline() {
             </p>
           </div>
 
+          <div className="max-w-3xl mb-8">
+            <IntroSection eyebrow="SCOPE">
+              <p>
+                This project gathers interstate wars, occupations, insurgencies, politicide, ethnic cleansing, state repression, detention systems, and campaigns of mass political violence across Asia from 1945 to 2026. Solid bars represent armed conflict. Patterned bars represent large-scale political repression, state terror, forced displacement, or mass violence directed primarily against civilian populations.<Cite ids={[1, 2, 3, 60, 61, 62]}/>
+              </p>
+            </IntroSection>
+
+            <IntroSection eyebrow="SOURCES">
+              <p>
+                Event entries are compiled from the institutional conflict datasets <strong>UCDP</strong>, <strong>PRIO</strong>, and <strong>ACLED</strong>; <strong>UN Commission of Inquiry</strong> reports and OHCHR documentation; academic monographs and peer-reviewed mortality studies; <strong>Human Rights Watch</strong> and <strong>Amnesty International</strong> country investigations; and contemporary reporting where the situation is still developing. Every claim attributable to a specific source carries a superscript number that scrolls to the full bibliographic entry in the references list at the foot of the page.<Cite ids={[1, 2, 3, 4, 6, 7, 8, 9]}/>
+              </p>
+            </IntroSection>
+
+            <IntroSection eyebrow={`DATA AS OF ${DATA_AS_OF.toUpperCase()}`}>
+              <p>
+                Figures for ongoing events &#x2014; marked with a trailing <strong>+</strong> on the death and displacement counts &#x2014; are running totals through {DATA_AS_OF} and will change. The list of conflicts currently treated as ongoing includes the Israeli operations in Gaza and Lebanon, the 2026 Iran war, the Myanmar post-coup civil war, the Afghanistan&#x2013;Pakistan war, the West Papua conflict, the Xinjiang campaign, the North Korean <em>kwalliso</em> system, and the Falun Gong persecution.
+              </p>
+            </IntroSection>
+
+            <IntroSection eyebrow="RUSSIA AND THE USSR">
+              <p>
+                The geographic scope follows the United Nations Asia scheme. <strong>Russia and the Soviet Union appear only where they act inside Asia against an Asian state</strong> &#x2014; the Sino&#x2013;Soviet Border Conflict of 1969 and the Soviet&#x2013;Afghan War of 1979 to 1989. Internal Soviet repression, the Chechen wars, and post-Soviet Russian conflicts outside the UN Asia scheme are not included. Soviet involvement as an external sponsor in Asian wars (Korea, Vietnam, the Cold War proxy network) is treated within the entry on each Asian conflict, not as a separate Russian event.
+              </p>
+            </IntroSection>
+
+            <IntroSection eyebrow="LIMITS">
+              <p>
+                The categories are necessarily imperfect. Many events move across the boundary between war and state violence. Casualty figures likewise remain contested. The estimates presented throughout are drawn from academic literature, institutional datasets, demographic studies, legal investigations, and historical scholarship, and should be read as historical approximations rather than definitive totals.<Cite ids={[47]}/>
+              </p>
+            </IntroSection>
+          </div>
+
           {/* VIEW TOGGLE */}
           <div className="flex items-center gap-2 mb-7 flex-wrap">
             <span className="mono text-[10px] tracking-[0.22em] mr-1" style={{ color: 'rgba(var(--text-rgb),0.5)' }}>VIEW</span>
@@ -1467,13 +1470,19 @@ export default function AsiaViolenceTimeline() {
             ))}
           </div>
 
-          {/* READING GUIDE — adapts to current view */}
+          {/* READING GUIDE — styled distinctly from body text so it reads as a
+              reader aid rather than continuous prose. */}
           {viewMode === 'convergence' ? (
-            <div className="max-w-3xl mb-10">
-              <div className="mono text-[10px] tracking-[0.25em] mb-3" style={{ color: 'rgba(var(--text-rgb),0.6)' }}>
-                HOW TO READ THE CONVERGENCE VIEW
+            <aside className="max-w-3xl mb-10 p-5 sm:p-6 rounded"
+              style={{
+                background: 'rgba(var(--text-rgb),0.04)',
+                borderLeft: '3px solid var(--accent)',
+              }}>
+              <div className="mono text-[9.5px] tracking-[0.28em] mb-3 inline-block px-2 py-1 rounded-sm"
+                style={{ color: 'var(--accent)', background: 'rgba(var(--text-rgb),0.06)' }}>
+                READER&apos;S GUIDE · HOW TO READ THE CONVERGENCE VIEW
               </div>
-              <p className="sans text-[14px] sm:text-[15px] leading-relaxed mb-3" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
+              <p className="sans text-[13.5px] sm:text-[14.5px] leading-relaxed mb-3" style={{ color: 'rgba(var(--text-rgb),0.82)' }}>
                 The map below sits on a coarse, hand-traced silhouette of Asia &#x2014; deliberately rough, so it reads as a cartographic gesture rather than an atlas illustration. Each catalogue event is encoded through four channels. None overlap; each is independent of the others.
               </p>
               <dl className="m-0">
@@ -1485,25 +1494,30 @@ export default function AsiaViolenceTimeline() {
                   { term: 'Arcs connect parties.', def: "Hovering or selecting an event that involves two or more states draws a dashed arc between each pair of countries named in the catalogue, in the event's region colour. The arcs are an editorial gesture, not a vector of attack." },
                 ].map(row => (
                   <div key={row.term} className="grid sm:grid-cols-[220px_1fr] gap-1 sm:gap-4 py-2.5"
-                    style={{ borderTop: '1px solid rgba(var(--text-rgb),0.18)' }}>
-                    <dt className="serif text-[14px] sm:text-[15px] font-medium" style={{ color: 'var(--text)' }}>{row.term}</dt>
-                    <dd className="serif text-[14px] sm:text-[15px] m-0 leading-relaxed" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>{row.def}</dd>
+                    style={{ borderTop: '1px solid rgba(var(--text-rgb),0.14)' }}>
+                    <dt className="serif text-[13.5px] sm:text-[14.5px] font-medium" style={{ color: 'var(--text)' }}>{row.term}</dt>
+                    <dd className="serif text-[13.5px] sm:text-[14.5px] m-0 leading-relaxed" style={{ color: 'rgba(var(--text-rgb),0.82)' }}>{row.def}</dd>
                   </div>
                 ))}
               </dl>
-              <p className="sans text-[14px] leading-relaxed mt-3" style={{ color: 'rgba(var(--text-rgb),0.7)' }}>
+              <p className="sans text-[13px] leading-relaxed mt-3" style={{ color: 'rgba(var(--text-rgb),0.66)' }}>
                 Click any symbol to open the full event description in the detail card below the map. Casualty and displacement figures appear verbatim from the source catalogue and should be read as historical approximations rather than definitive totals. Inline numeric superscripts in the description scroll directly to the matching entry in the references list at the bottom of the page.
               </p>
-            </div>
+            </aside>
           ) : (
-            <div className="max-w-3xl mb-10">
-              <div className="mono text-[10px] tracking-[0.25em] mb-3" style={{ color: 'rgba(var(--text-rgb),0.6)' }}>
-                HOW TO READ THE DATABASE VIEW
+            <aside className="max-w-3xl mb-10 p-5 sm:p-6 rounded"
+              style={{
+                background: 'rgba(var(--text-rgb),0.04)',
+                borderLeft: '3px solid var(--accent)',
+              }}>
+              <div className="mono text-[9.5px] tracking-[0.28em] mb-3 inline-block px-2 py-1 rounded-sm"
+                style={{ color: 'var(--accent)', background: 'rgba(var(--text-rgb),0.06)' }}>
+                READER&apos;S GUIDE · HOW TO READ THE DATABASE VIEW
               </div>
-              <p className="sans text-[14px] sm:text-[15px] leading-relaxed" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
-                The timeline below renders each catalogue event as a horizontal bar positioned by its year span. <strong style={{ color: 'var(--text)' }}>Solid bars</strong> mark armed conflict; <strong style={{ color: 'var(--text)' }}>patterned bars marked PV</strong> mark campaigns of political mass violence. Bar colour reflects the event's region. Click any bar to expand its full description, including casualty figures, displaced figures, and source citations. Use the year-range slider, the category pills, the group-by toggle, and the country filter to narrow the catalogue.
+              <p className="sans text-[13.5px] sm:text-[14.5px] leading-relaxed" style={{ color: 'rgba(var(--text-rgb),0.82)' }}>
+                The timeline below renders each catalogue event as a horizontal bar positioned by its year span. <strong style={{ color: 'var(--text)' }}>Solid bars</strong> mark armed conflict; <strong style={{ color: 'var(--text)' }}>patterned bars marked PV</strong> mark campaigns of political mass violence. Bar colour reflects the event&apos;s region. Click any bar to expand its full description, including casualty figures, displaced figures, and source citations. Use the year-range slider, the category pills, the group-by toggle, and the country filter to narrow the catalogue.
               </p>
-            </div>
+            </aside>
           )}
 
           {viewMode === 'convergence' ? <Convergence /> : (<>
