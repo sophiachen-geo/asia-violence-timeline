@@ -19,8 +19,6 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   EVENTS as RAW_EVENTS,
   COUNTRY_REGION,
-  CITATIONS,
-  Cite,
 } from './asia_violence_timeline.jsx';
 import { COUNTRY_COORDS } from './data/country_coords.js';
 import { useTheme } from './useTheme.js';
@@ -463,57 +461,143 @@ export default function Convergence() {
         }
       `}</style>
 
-      {/* HEADER */}
+      {/* HEADER (theme toggle only; the project framing lives below in INTRO + PART I) */}
       <header style={{
-        padding: isPhone ? '24px 18px 12px' : '38px 48px 12px',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-        gap: 18, flexWrap: 'wrap',
+        padding: isPhone ? '20px 18px 0' : '28px 48px 0',
+        display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
+        gap: 8,
       }}>
-        <div style={{ flex: 1, minWidth: 280 }}>
-          <div className="cv-mono" style={{
-            fontSize: 10, letterSpacing: '.3em', color: T.accent, marginBottom: 10,
+        <button
+          onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+          className="cv-mono"
+          style={{
+            background: T.panel, color: T.text, border: '1px solid ' + T.rule,
+            padding: '7px 14px', fontSize: 10, letterSpacing: '.2em',
+            borderRadius: 99, cursor: 'pointer',
+          }}
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+        >
+          {theme === 'dark' ? '☼ LIGHT' : '☾ DARK'}
+        </button>
+      </header>
+
+      {/* INTRO */}
+      <section style={{
+        padding: isPhone ? '18px 18px 0' : '14px 48px 0',
+        maxWidth: 1100, margin: '0 auto',
+      }}>
+        <div className="cv-mono" style={{
+          fontSize: 10, letterSpacing: '.3em', color: T.accent, marginBottom: 10,
+        }}>INTRODUCTION</div>
+        <p className="cv-serif" style={{
+          fontSize: isPhone ? 15 : 17, lineHeight: 1.55, color: T.text,
+          margin: '0 0 12px', maxWidth: 820,
+        }}>
+          A combined record of armed conflict and political mass violence across Asia, 1945 to 2026. The catalogue assembles 136 events across 46 countries, drawn from academic monographs, UN commissions of inquiry, institutional conflict datasets including UCDP, PRIO, and ACLED, and contemporary reporting.
+        </p>
+        <p className="cv-serif" style={{
+          fontSize: isPhone ? 14 : 15, lineHeight: 1.55, color: T.mute,
+          margin: 0, maxWidth: 820,
+        }}>
+          Two views over the same dataset. The Convergence view, below, lets a reader explore the catalogue along category, region, country, and time-period dimensions through a coordinated dashboard, Asia map, and country-by-year grid. The Database view presents the same events as a chronological essay with analytical sections on the conditions of peace, on empire and migration, and on methodology.
+        </p>
+      </section>
+
+      {/* PART I */}
+      <section style={{
+        padding: isPhone ? '32px 18px 0' : '40px 48px 0',
+        maxWidth: 1100, margin: '0 auto',
+      }}>
+        <div className="cv-mono" style={{
+          fontSize: 10, letterSpacing: '.3em', color: T.accent, marginBottom: 10,
+        }}>PART I</div>
+        <div className="cv-mono" style={{
+          fontSize: 10, letterSpacing: '.3em', color: T.mute, marginBottom: 10,
+        }}>
+          ASIA · POLITICAL VIOLENCE AND ARMED CONFLICT · 1945 TO 2026
+        </div>
+        <h1 className="cv-serif" style={{
+          fontSize: isPhone ? 28 : isTablet ? 36 : 44, fontWeight: 500,
+          lineHeight: 1.05, margin: '0 0 18px', color: T.headline,
+        }}>
+          Where It Happened, <span style={{ fontStyle: 'italic', color: T.accent }}>When It Happened.</span>
+        </h1>
+
+        {/* Rigorous encoding key */}
+        <div style={{ maxWidth: 820, marginBottom: 24 }}>
+          <p className="cv-serif" style={{
+            fontSize: isPhone ? 14 : 15, lineHeight: 1.6, color: T.text,
+            margin: '0 0 14px',
           }}>
-            ASIA · POLITICAL VIOLENCE AND ARMED CONFLICT · 1945 TO 2026
-          </div>
-          <h1 className="cv-serif" style={{
-            fontSize: isPhone ? 28 : isTablet ? 36 : 44, fontWeight: 500,
-            lineHeight: 1, margin: '0 0 8px', color: T.headline,
+            The map below encodes each catalogue event through three orthogonal visual channels on a stylized lon/lat projection of Asia. None of the channels overlap; each is independent of the others.
+          </p>
+          <dl style={{ margin: 0 }}>
+            {[
+              {
+                term: 'Shape encodes category.',
+                def: 'A filled circle marks an armed conflict (interstate war, civil war, sustained insurgency, conventional clash). A filled diamond marks a campaign of political mass violence (politicide, ethnic cleansing, genocide, policy-induced famine, or systematic detention).',
+              },
+              {
+                term: 'Core size encodes fatalities.',
+                def: "The radius of the solid core scales with the mid-range estimate of people killed during the event, drawn from the cited primary sources.",
+              },
+              {
+                term: 'Halo size encodes displacement.',
+                def: "The translucent ring scales with the mid-range estimate of people displaced over the event's duration. Events without a recorded displacement figure render with no halo.",
+              },
+              {
+                term: 'Colour encodes region.',
+                def: "Each symbol takes the colour of the country at which it is plotted, not of the event's protagonist. An event spanning multiple countries appears once per country, each in that country's regional colour.",
+              },
+            ].map((row) => (
+              <div key={row.term} style={{
+                display: 'grid',
+                gridTemplateColumns: isPhone ? '1fr' : '220px 1fr',
+                gap: isPhone ? 4 : 18,
+                padding: '10px 0',
+                borderTop: '1px solid ' + T.rule,
+              }}>
+                <dt className="cv-serif" style={{
+                  fontSize: isPhone ? 13.5 : 14.5, color: T.text, fontWeight: 500,
+                }}>{row.term}</dt>
+                <dd className="cv-serif" style={{
+                  margin: 0,
+                  fontSize: isPhone ? 13.5 : 14.5, lineHeight: 1.55, color: T.mute,
+                }}>{row.def}</dd>
+              </div>
+            ))}
+          </dl>
+          <p className="cv-serif" style={{
+            fontSize: isPhone ? 13.5 : 14.5, lineHeight: 1.55, color: T.mute,
+            margin: '14px 0 0',
           }}>
-            Where It Happened, <span style={{ fontStyle: 'italic', color: T.accent }}>When It Happened.</span>
-          </h1>
-          <p style={{
-            fontSize: isPhone ? 12.5 : 13.5, lineHeight: 1.55, maxWidth: 780,
-            color: T.mute, margin: 0,
-          }}>
-            <strong style={{ color: T.text }}>Shape encodes category</strong> (filled circle for armed conflict, diamond for political violence).{' '}
-            <strong style={{ color: T.text }}>Solid core sizes by people killed</strong>.{' '}
-            <strong style={{ color: T.text }}>Translucent halo sizes by people displaced</strong>.{' '}
-            Click any symbol to read the event below.
+            Click any symbol to open the full event description in the detail card below the map. Casualty and displacement figures appear verbatim from the source catalogue and should be read as historical approximations rather than definitive totals.
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <a href="?" className="cv-mono" style={{
-            background: T.panel, color: T.mute, border: '1px solid ' + T.rule,
-            padding: '7px 14px', fontSize: 10, letterSpacing: '.2em',
-            borderRadius: 99, cursor: 'pointer', textDecoration: 'none',
+        {/* VIEW SWITCH */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '14px 0 28px', flexWrap: 'wrap',
+        }}>
+          <span className="cv-mono" style={{
+            fontSize: 9, letterSpacing: '.22em', color: T.faint, marginRight: 4,
+          }}>VIEW</span>
+          <span className="cv-mono" style={{
+            background: T.accent, color: T.accentInk,
+            padding: '6px 14px', fontSize: 10, letterSpacing: '.2em',
+            borderRadius: 99, border: '1px solid ' + T.accent,
+          }}>● CONVERGENCE</span>
+          <a href="?view=database" className="cv-mono" style={{
+            background: 'transparent', color: T.accent,
+            padding: '6px 14px', fontSize: 10, letterSpacing: '.2em',
+            borderRadius: 99, border: '1px solid ' + T.accent,
+            textDecoration: 'none', cursor: 'pointer',
           }}>
-            ← BACK TO ESSAY
+            DATABASE →
           </a>
-          <button
-            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
-            className="cv-mono"
-            style={{
-              background: T.panel, color: T.text, border: '1px solid ' + T.rule,
-              padding: '7px 14px', fontSize: 10, letterSpacing: '.2em',
-              borderRadius: 99, cursor: 'pointer',
-            }}
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
-          >
-            {theme === 'dark' ? '☼ LIGHT' : '☾ DARK'}
-          </button>
         </div>
-      </header>
+      </section>
 
       {/* DASHBOARD */}
       <div style={{ padding: isPhone ? '0 18px 16px' : '8px 48px 18px' }}>
@@ -1248,7 +1332,7 @@ export default function Convergence() {
                   fontSize: isPhone ? 14.5 : 15.5, lineHeight: 1.6, color: T.text, maxWidth: 920,
                 }}>
                   {renderBold(e.note, e.name)}
-                  {e.cites && e.cites.length > 0 && <Cite ids={e.cites}/>}
+                  {e.cites && e.cites.length > 0 && <ConvergenceCite ids={e.cites}/>}
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
                   <button onClick={() => setSelectedEvent(null)} className="cv-mono" style={{
@@ -1377,69 +1461,37 @@ export default function Convergence() {
         </div>
       </div>
 
-      {/* REFERENCES (mirrors the essay so inline Cite scrolls work) */}
-      <section style={{
-        padding: isPhone ? '0 18px 60px' : '0 48px 80px',
-        maxWidth: 1100, margin: '0 auto',
-      }}>
-        <div className="cv-mono" style={{
-          fontSize: 10, letterSpacing: '.3em', color: T.accent, marginBottom: 12,
-        }}>REFERENCES</div>
-        <h2 className="cv-serif" style={{
-          fontSize: isPhone ? 22 : 28, fontWeight: 500, color: T.headline,
-          margin: '0 0 18px', lineHeight: 1.1,
-        }}>Citation Reference List</h2>
-        {(() => {
-          const REF_SECTIONS = [
-            { startAt: 1,  label: "Datasets and institutional sources" },
-            { startAt: 10, label: "Books and articles cited in the event catalogue" },
-            { startAt: 20, label: "Event-specific reports and investigations" },
-            { startAt: 45, label: "Scholarship cited in the analytical sections" },
-            { startAt: 60, label: "Politicide, repression, and state-failure datasets" },
-            { startAt: 63, label: "Heritage Month institutional history" },
-          ];
-          return (
-            <ol style={{
-              fontFamily: "'DM Sans', system-ui, sans-serif",
-              fontSize: 13, lineHeight: 1.55, color: T.mute,
-              padding: 0, margin: 0,
-            }}>
-              {CITATIONS.map(c => {
-                const section = REF_SECTIONS.find(s => s.startAt === c.n);
-                return (
-                  <React.Fragment key={c.n}>
-                    {section && (
-                      <li className="cv-mono" style={{
-                        fontSize: 10, letterSpacing: '.25em',
-                        marginTop: 24, marginBottom: 8,
-                        color: T.accent, listStyle: 'none', padding: '0 8px',
-                      }}>
-                        {section.label.toUpperCase()}
-                      </li>
-                    )}
-                    <li id={'ref-' + c.n} style={{
-                      display: 'flex', gap: 12, padding: '6px 8px',
-                      borderBottom: '1px solid ' + T.emptyCell,
-                      scrollMarginTop: '2rem',
-                    }}>
-                      <span className="cv-mono" style={{
-                        color: T.accent, minWidth: 28, flexShrink: 0,
-                      }}>{c.n}.</span>
-                      <span style={{ flex: 1, minWidth: 0 }}>
-                        {c.text}{' '}
-                        <a href={c.url} target="_blank" rel="noopener noreferrer" style={{
-                          color: T.accent, textDecoration: 'underline', wordBreak: 'break-all',
-                        }}>{c.url.replace(/^https?:\/\//, '')}</a>
-                      </span>
-                    </li>
-                  </React.Fragment>
-                );
-              })}
-            </ol>
-          );
-        })()}
-      </section>
     </div>
+  );
+}
+
+// ============================================================
+// ConvergenceCite — clickable inline superscript that navigates to
+// the Database view's references list at the matching anchor. The
+// references section was removed from this view at the user's
+// request; citations still work because the browser resolves the
+// URL fragment on load in the Database view.
+// ============================================================
+
+function ConvergenceCite({ ids }) {
+  return (
+    <sup style={{ fontSize: '0.7em', whiteSpace: 'nowrap', marginLeft: '1px' }}>
+      {ids.map((n, i) => (
+        <React.Fragment key={n}>
+          {i > 0 && <span style={{ color: 'var(--accent)' }}>,</span>}
+          <a
+            href={`?view=database#ref-${n}`}
+            style={{
+              color: 'var(--accent)',
+              textDecoration: 'none',
+              padding: '0 1px',
+              cursor: 'pointer',
+              fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+            }}
+          >{n}</a>
+        </React.Fragment>
+      ))}
+    </sup>
   );
 }
 

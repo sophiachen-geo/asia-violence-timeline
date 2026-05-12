@@ -1179,14 +1179,14 @@ export default function AsiaViolenceTimeline() {
                 }}>
                 {theme === 'dark' ? '☼ LIGHT' : '☾ DARK'}
               </button>
-              <a href="?view=convergence" className="mono text-[10px] tracking-[0.2em] px-3 py-1.5 rounded-full"
+              <a href="?" className="mono text-[10px] tracking-[0.2em] px-3 py-1.5 rounded-full"
                 style={{
                   color: 'var(--accent)',
                   border: '1px solid rgba(184,149,106,0.45)',
                   textDecoration: 'none',
                   backgroundColor: 'rgba(184,149,106,0.06)',
                 }}>
-                TRY CONVERGENCE VIEW →
+                ← CONVERGENCE VIEW
               </a>
             </div>
           </div>
