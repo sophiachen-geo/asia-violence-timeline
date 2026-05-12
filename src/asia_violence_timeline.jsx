@@ -596,6 +596,82 @@ function renderBold(text) {
 }
 
 // ============================================================
+// INTRO SECTION — one paragraph with an eyebrow label.
+// Used to break the intro essay into navigable analytical units
+// without losing the editorial register.
+// ============================================================
+
+function IntroSection({ eyebrow, children }) {
+  return (
+    <section className="mb-6">
+      <div className="mono text-[10px] tracking-[0.25em] mb-2"
+           style={{ color: 'var(--accent)', opacity: 0.85 }}>
+        {eyebrow}
+      </div>
+      <div className="sans text-[14px] sm:text-[15px] leading-relaxed"
+           style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+// ============================================================
+// CATEGORY LEGEND — taxonomy for the database view's bar encoding.
+// Solid vs patterned bars; not applicable to the convergence view
+// which encodes category via symbol shape.
+// ============================================================
+
+function CategoryLegend() {
+  return (
+    <div className="mb-8 p-4 sm:p-5 rounded"
+         style={{ border: '1px solid rgba(var(--text-rgb),0.12)',
+                  backgroundColor: 'rgba(var(--text-rgb),0.02)' }}>
+      <div className="mono text-[10px] tracking-[0.25em] mb-4" style={{ color: 'var(--accent)' }}>
+        WHAT THIS TIMELINE INCLUDES
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div style={{ width: 40, height: 8, backgroundColor: 'var(--accent)', borderRadius: 2 }} />
+            <div className="mono text-[10px] tracking-[0.15em]" style={{ color: 'var(--text)' }}>
+              SOLID · ARMED CONFLICT
+            </div>
+          </div>
+          <ul className="sans text-[12.5px] space-y-0.5 pl-[52px]"
+              style={{ color: 'rgba(var(--text-rgb),0.78)' }}>
+            <li>Interstate war</li>
+            <li>Civil war and insurgency</li>
+            <li>Occupation</li>
+            <li>Sustained conventional clash</li>
+          </ul>
+        </div>
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <div style={{
+              width: 40, height: 8,
+              backgroundImage: 'repeating-linear-gradient(45deg, var(--accent) 0px, var(--accent) 2px, transparent 2px, transparent 4px)',
+              border: '1px solid var(--accent)',
+              borderRadius: 2,
+            }} />
+            <div className="mono text-[10px] tracking-[0.15em]" style={{ color: 'var(--text)' }}>
+              PATTERNED · POLITICAL MASS VIOLENCE
+            </div>
+          </div>
+          <ul className="sans text-[12.5px] space-y-0.5 pl-[52px]"
+              style={{ color: 'rgba(var(--text-rgb),0.78)' }}>
+            <li>Politicide and state repression</li>
+            <li>Ethnic cleansing and genocide</li>
+            <li>Detention and disappearance systems</li>
+            <li>Policy-induced mass violence</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // NUMERIC ESTIMATE PARSER
 //
 // The catalogue stores death and displacement figures as
@@ -1198,28 +1274,56 @@ export default function AsiaViolenceTimeline() {
           <p className="serif italic mb-7 max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)', fontSize: 'clamp(17px, 2.4vw, 22px)', lineHeight: 1.3 }}>
             Asia, Violence, and the Histories Behind Asian Heritage Month (1945&#x2013;2026)
           </p>
-          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
-            <p>
-              Asian Heritage Month is often organized around migration, contribution, resilience, and belonging. This project begins slightly earlier, with the historical conditions that made many migrations necessary in the first place.
-            </p>
-            <p>
-              The timeline starts in 1945 because the end of the Second World War marked a fundamental rupture in modern Asian history.<Cite ids={[45]}/> The collapse of the Japanese Empire, the weakening of European colonial powers, the beginning of the Cold War, the acceleration of decolonization, and the creation of the postwar international order transformed Asia more rapidly and violently than perhaps any other region in the world during the second half of the twentieth century.<Cite ids={[57, 58]}/>
-            </p>
-            <p>
-              Many of the political realities that continue to shape contemporary Asia &#x2014; the division of Korea, the Partition of India, the Chinese Civil War, the Vietnam Wars, the Arab&#x2013;Israeli conflict, postcolonial border disputes, Cold War proxy struggles, refugee movements, and the emergence of modern Asian diasporas in North America &#x2014; either began directly after 1945 or were fundamentally reshaped by the postwar order that emerged from it.<Cite ids={[45, 46]}/>
-            </p>
-            <p>
-              Since then, Asia has experienced successive waves of interstate war, civil war, occupation, insurgency, dictatorship, political repression, forced displacement, and mass violence. Some of these events became central to international historical memory. Others remained fragmented across diasporas, survivor communities, family histories, and local archives.
-            </p>
-            <p>
-              This project gathers interstate wars, occupations, insurgencies, politicide, ethnic cleansing, state repression, detention systems, and campaigns of mass political violence across Asia from 1945 to 2026. Solid bars represent armed conflict. Patterned bars represent large-scale political repression, state terror, forced displacement, or mass violence directed primarily against civilian populations.<Cite ids={[1, 2, 3, 60, 61, 62]}/>
-            </p>
-            <p>
-              The categories are necessarily imperfect. Many events move across the boundary between war and state violence. Casualty figures likewise remain contested. The estimates presented throughout are drawn from academic literature, institutional datasets, demographic studies, legal investigations, and historical scholarship, and should be read as historical approximations rather than definitive totals.<Cite ids={[47]}/>
-            </p>
-            <p>
-              This project does not argue that Asia can be reduced to violence. It argues that many contemporary Asian diasporas &#x2014; including those celebrated each May in Canada and the United States &#x2014; emerged within a broader historical landscape shaped by empire, decolonization, Cold War rivalry, migration, and displacement.
-            </p>
+          <div className="max-w-3xl">
+            <IntroSection eyebrow="PREMISE">
+              <p>
+                Asian Heritage Month is often organized around migration, contribution, resilience, and belonging. This project begins slightly earlier, with the historical conditions that made many migrations necessary in the first place.
+              </p>
+            </IntroSection>
+
+            <IntroSection eyebrow="WHY 1945">
+              <p>
+                The timeline starts in 1945 because the end of the Second World War marked a fundamental rupture in modern Asian history.<Cite ids={[45]}/> Five forces converged: the collapse of the Japanese Empire, the weakening of European colonial powers, the beginning of the Cold War, the acceleration of decolonization, and the creation of the postwar international order. Together they transformed Asia more rapidly and violently than perhaps any other region of the world during the second half of the twentieth century.<Cite ids={[57, 58]}/>
+              </p>
+            </IntroSection>
+
+            <IntroSection eyebrow="WHAT FOLLOWED">
+              <p>
+                Many of the political realities that continue to shape contemporary Asia &#x2014; the division of Korea, the Partition of India, the Chinese Civil War, the Vietnam Wars, the Arab&#x2013;Israeli conflict, postcolonial border disputes, Cold War proxy struggles, refugee movements, and the emergence of modern Asian diasporas in North America &#x2014; either began directly after 1945 or were fundamentally reshaped by the postwar order that emerged from it.<Cite ids={[45, 46]}/> Since then, Asia has experienced successive waves of interstate war, civil war, occupation, insurgency, dictatorship, political repression, forced displacement, and mass violence. Some of these events became central to international historical memory. Others remained fragmented across diasporas, survivor communities, family histories, and local archives.
+              </p>
+            </IntroSection>
+
+            <IntroSection eyebrow="SCOPE">
+              <p>
+                This project gathers interstate wars, occupations, insurgencies, politicide, ethnic cleansing, state repression, detention systems, and campaigns of mass political violence across Asia from 1945 to 2026. Solid bars represent armed conflict. Patterned bars represent large-scale political repression, state terror, forced displacement, or mass violence directed primarily against civilian populations.<Cite ids={[1, 2, 3, 60, 61, 62]}/>
+              </p>
+            </IntroSection>
+
+            <IntroSection eyebrow="LIMITS">
+              <p>
+                The categories are necessarily imperfect. Many events move across the boundary between war and state violence. Casualty figures likewise remain contested. The estimates presented throughout are drawn from academic literature, institutional datasets, demographic studies, legal investigations, and historical scholarship, and should be read as historical approximations rather than definitive totals.<Cite ids={[47]}/>
+              </p>
+            </IntroSection>
+
+            <section className="mt-8 mb-2">
+              <div className="mono text-[10px] tracking-[0.25em] mb-3"
+                   style={{ color: 'var(--accent)', opacity: 0.85 }}>
+                STANCE
+              </div>
+              <blockquote className="serif italic"
+                style={{
+                  color: 'var(--text)',
+                  fontSize: 'clamp(18px, 2.6vw, 23px)',
+                  lineHeight: 1.35,
+                  borderLeft: '2px solid var(--accent)',
+                  paddingLeft: '1.2rem',
+                  margin: 0,
+                }}>
+                <p style={{ margin: 0 }}>
+                  This project does not argue that Asia can be reduced to violence. It argues that many contemporary Asian diasporas &#x2014; including those celebrated each May in Canada and the United States &#x2014; emerged within a broader historical landscape shaped by empire, decolonization, Cold War rivalry, migration, and displacement.
+                </p>
+              </blockquote>
+            </section>
           </div>
         </header>
 
@@ -1373,6 +1477,9 @@ export default function AsiaViolenceTimeline() {
             onToggleRegion={toggleRegionCountries}
           />
         </div>
+
+        {/* CATEGORY LEGEND — taxonomy at the boundary between framing and timeline. */}
+        <CategoryLegend />
 
         {/* TIMELINE */}
         {total === 0 ? (
