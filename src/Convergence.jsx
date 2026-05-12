@@ -20,8 +20,11 @@ import {
   EVENTS as RAW_EVENTS,
   COUNTRY_REGION,
   Cite,
+  fmtFigure,
+  DATA_AS_OF,
 } from './asia_violence_timeline.jsx';
 import { COUNTRY_COORDS } from './data/country_coords.js';
+import { ASIA_MAINLAND, ASIA_ISLANDS } from './data/asia_outline.js';
 import { useTheme } from './useTheme.js';
 
 // ============================================================
@@ -114,70 +117,9 @@ const END_YEAR = 2026;
 const CURRENT_YEAR = new Date().getFullYear();
 const REGION_ORDER = ["West Asia", "Central Asia", "South Asia", "Southeast Asia", "East Asia"];
 
-// ============================================================
-// ASIA LANDMASS — coarse hand-traced silhouette in lon/lat space.
-// Not a real basemap. Vertex count is deliberately low so the map
-// reads as a stylized cartographic gesture rather than an atlas
-// illustration. Continental mainland is one closed loop; major
-// archipelagos and offshore islands render as separate simplified
-// shapes below. Adjust freely.
-// ============================================================
-
-const ASIA_MAINLAND = [
-  // West edge — Anatolia / Levant / Sinai
-  [28, 41], [32, 41], [36, 37], [36, 33], [35, 31], [32, 29], [34, 27],
-  // Arabian Peninsula
-  [38, 21], [42, 16], [44, 13], [48, 14], [52, 16], [55, 17],
-  [57, 22], [60, 25],
-  // Gulf coast / Iran south / Pakistan
-  [54, 24], [50, 27], [49, 30], [56, 26], [62, 25], [67, 25],
-  // India west coast / southern tip
-  [70, 23], [73, 19], [75, 14], [77, 8], [78, 8],
-  // India east coast / Bay of Bengal
-  [80, 11], [82, 16], [86, 20], [89, 22],
-  // Myanmar / Andaman coast
-  [93, 19], [94, 16], [97, 15],
-  // Malay Peninsula
-  [98, 9], [100, 5], [103, 1],
-  // Indochina east coast
-  [105, 10], [109, 11], [109, 15], [108, 18], [107, 21],
-  // South China coast
-  [110, 21], [114, 22], [117, 23], [120, 24], [121, 28], [122, 32], [122, 37],
-  // Korean Peninsula
-  [125, 39], [128, 38], [129, 35], [130, 36], [129, 39], [131, 42],
-  // Russian Far East / Sea of Okhotsk
-  [134, 47], [138, 52], [142, 55], [148, 60], [156, 62],
-  // Top edge — Siberian coast, truncated near lat 64 (map's max)
-  [155, 64], [120, 64], [80, 64], [55, 60],
-  // Caspian / Caucasus return
-  [50, 50], [50, 45], [48, 42], [44, 41], [40, 43], [37, 42], [32, 42],
-];
-
-// Islands and archipelagos — each is its own simplified loop in lon/lat.
-// These are gesture-level outlines, not real coastlines.
-const ASIA_ISLANDS = [
-  // Japan — three-blob chain
-  [[131, 32], [134, 33], [137, 34], [140, 36], [142, 40], [141, 43],
-   [144, 44], [142, 41], [139, 38], [136, 35], [133, 34], [131, 32]],
-  // Taiwan
-  [[120.5, 22], [121.5, 22.2], [122, 24], [121.5, 25.3], [120.6, 24.5], [120.5, 22]],
-  // Sri Lanka
-  [[79.8, 6], [81.8, 6.5], [82, 9], [80, 10], [79.5, 8], [79.8, 6]],
-  // Sumatra
-  [[95, 5.5], [100, 1], [105, -4], [106, -6], [102, -5], [98, -1], [95, 5.5]],
-  // Java
-  [[105, -6], [110, -7], [114, -8], [113, -8.5], [108, -8], [105, -6]],
-  // Borneo (Kalimantan / Sabah / Sarawak)
-  [[109, 2], [112, -1], [115, -4], [117, -4], [118, 0], [117, 4], [114, 5], [111, 4], [109, 2]],
-  // Sulawesi (rough cross shape simplified to lozenge)
-  [[119, -5], [121, -3], [123, 0], [125, 1], [124, -2], [122, -4], [119, -5]],
-  // Luzon (Philippines main island)
-  [[120, 14], [121, 18.5], [122, 18], [124, 16], [122, 13], [120, 14]],
-  // Mindanao (Philippines south)
-  [[122, 6], [125, 6], [126, 8], [125, 9.5], [123, 9], [122, 6]],
-  // New Guinea (Indonesian half + PNG; western half is Asian per UN scheme)
-  [[131, -1], [136, -2], [141, -3], [141, -6], [137, -7], [133, -5], [131, -1]],
-];
+// ASIA_MAINLAND and ASIA_ISLANDS live in ./data/asia_outline.js so the
+// coordinate authoring is decoupled from rendering logic. The shapes are
+// a denser stylized silhouette of Asia — no internal country borders.
 
 // Countries to label on the silhouette. Subset chosen for legibility:
 // they're large enough or politically prominent enough that a label
@@ -314,6 +256,7 @@ export default function Convergence() {
     cat: e.category === 'Political Violence' ? 'PV' : 'AC',
     start: e.start,
     end: e.end,
+    ongoing: !!e.ongoing,
     deaths: e.deaths,
     displaced: e.displaced,
     deathsEst: parseEstimate(e.deaths),
@@ -998,7 +941,7 @@ export default function Convergence() {
                    onMouseLeave={() => setMapHover(null)}
                    onClick={() => { setSelectedEvent(e); setSelectedCell(null); }}
                    role="button"
-                   aria-label={`${e.name}, ${e.start} to ${e.end}, ${e.deaths} killed`}
+                   aria-label={`${e.name}, ${e.start} to ${e.end}, ${fmtFigure(e.deaths, e.ongoing)} killed${e.ongoing ? ', ongoing' : ''}`}
                    tabIndex={0}>
                   {rHalo > rCore && (isPV
                     ? <polygon points={haloDiamond} fill={col} opacity={dim ? 0.08 : 0.18}/>
@@ -1039,6 +982,9 @@ export default function Convergence() {
               the linking arc visible on hover marks the parties named in
               the catalogue. National-level splits would require additional
               sourcing and are not yet implemented in the dataset.
+              {' '}A trailing <strong style={{ color: T.text }}>+</strong> on
+              a figure indicates an ongoing event; the total is a running
+              estimate through {DATA_AS_OF} and will change.
             </span>
           </div>
 
@@ -1072,8 +1018,8 @@ export default function Convergence() {
                   : `${mapHover.event.start} to ${mapHover.event.end}`}
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <Row T={T} mark="●" label="Killed" value={mapHover.event.deaths}/>
-                <Row T={T} mark="○" label="Displaced" value={mapHover.event.displaced || '—'}/>
+                <Row T={T} mark="●" label="Killed" value={fmtFigure(mapHover.event.deaths, mapHover.event.ongoing)}/>
+                <Row T={T} mark="○" label="Displaced" value={fmtFigure(mapHover.event.displaced, mapHover.event.ongoing)}/>
               </div>
             </div>
           )}
@@ -1405,13 +1351,13 @@ export default function Convergence() {
                 }}>
                   <Stat T={T} isPhone={isPhone}
                     label="● ESTIMATED TOTAL KILLED"
-                    value={e.deaths}
-                    sub={`over ${span} year${span > 1 ? 's' : ''}`}
+                    value={fmtFigure(e.deaths, e.ongoing)}
+                    sub={e.ongoing ? `running total · ${span} year${span > 1 ? 's' : ''}` : `over ${span} year${span > 1 ? 's' : ''}`}
                     color={T.accent}/>
                   <Stat T={T} isPhone={isPhone}
                     label="○ ESTIMATED TOTAL DISPLACED"
-                    value={e.displaced || '—'}
-                    sub={e.displaced ? `over ${span} year${span > 1 ? 's' : ''}` : 'no estimate'}/>
+                    value={fmtFigure(e.displaced, e.ongoing) || '—'}
+                    sub={e.displaced ? (e.ongoing ? `running total · ${span} year${span > 1 ? 's' : ''}` : `over ${span} year${span > 1 ? 's' : ''}`) : 'no estimate'}/>
                 </div>
 
                 {/* Description on the left, media slot on the right —
@@ -1516,7 +1462,7 @@ export default function Convergence() {
                         fontSize: 16, color: T.text, lineHeight: 1.2, marginBottom: 4,
                       }}>{e.name}</div>
                       <div className="cv-mono" style={{ fontSize: 9.5, color: T.mute }}>
-                        {e.start === e.end ? e.start : `${e.start} to ${e.end}`} · {e.deaths} killed · {e.displaced ? e.displaced + ' displaced' : 'no displacement data'}
+                        {e.start === e.end ? e.start : `${e.start} to ${e.end}`} · {fmtFigure(e.deaths, e.ongoing)} killed · {e.displaced ? fmtFigure(e.displaced, e.ongoing) + ' displaced' : 'no displacement data'}
                       </div>
                     </button>
                   ))}
@@ -1559,7 +1505,7 @@ export default function Convergence() {
                       fontSize: 16, color: T.text, lineHeight: 1.2, marginBottom: 4,
                     }}>{e.name}</div>
                     <div className="cv-mono" style={{ fontSize: 9.5, color: T.mute }}>
-                      {e.start === e.end ? e.start : `${e.start} to ${e.end}`} · {e.deaths} killed · {e.countries.join(', ')}
+                      {e.start === e.end ? e.start : `${e.start} to ${e.end}`} · {fmtFigure(e.deaths, e.ongoing)} killed · {e.countries.join(', ')}
                     </div>
                   </button>
                 ))}
