@@ -103,24 +103,11 @@ function renderBold(text, key) {
   );
 }
 
-// ============================================================
-// Normalize EVENTS to the shape Convergence wants
-// ============================================================
-
-const EVENTS = RAW_EVENTS.map(e => ({
-  name: e.name,
-  region: e.region,
-  countries: e.countries,
-  cat: e.category === 'Political Violence' ? 'PV' : 'AC',
-  start: e.start,
-  end: e.end,
-  deaths: e.deaths,
-  displaced: e.displaced,
-  deathsEst: parseEstimate(e.deaths),
-  displacedEst: parseEstimate(e.displaced),
-  note: e.note,
-  cites: e.cites || [],
-}));
+// EVENTS is normalized lazily inside the component (see useMemo below).
+// Doing it at module top-level breaks under the circular import that now
+// exists between this file and asia_violence_timeline.jsx (which imports
+// the Convergence default export). Top-level use of an imported binding
+// during a circular load triggers a temporal-dead-zone ReferenceError.
 
 const START_YEAR = 1945;
 const END_YEAR = 2026;
@@ -228,6 +215,24 @@ export default function Convergence() {
   const isPhone = vw < 700;
   const isTablet = vw >= 700 && vw < 1100;
   const isDesktop = vw >= 1100;
+
+  // Normalize the raw EVENTS into the shape the rest of this view wants.
+  // Lazy via useMemo to avoid the circular-import TDZ error described in
+  // the file-top comment.
+  const EVENTS = useMemo(() => RAW_EVENTS.map(e => ({
+    name: e.name,
+    region: e.region,
+    countries: e.countries,
+    cat: e.category === 'Political Violence' ? 'PV' : 'AC',
+    start: e.start,
+    end: e.end,
+    deaths: e.deaths,
+    displaced: e.displaced,
+    deathsEst: parseEstimate(e.deaths),
+    displacedEst: parseEstimate(e.displaced),
+    note: e.note,
+    cites: e.cites || [],
+  })), []);
 
   // Country list shown in dropdown is tied to active region filter.
   // Country-to-region uses the canonical COUNTRY_REGION map from the
