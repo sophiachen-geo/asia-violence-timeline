@@ -1,0 +1,1550 @@
+// ============================================================
+// Convergence — alternate view of the Asia Violence catalogue
+//
+// Side-by-side with the After Empire essay. Routed via ?view=convergence.
+// Three coordinated views over the same EVENTS data:
+//   1. Dashboard  — filters, dual-handle period, twin stat columns
+//   2. Map        — Asia, with each event positioned at country centroid,
+//                   encoded with shape (category) + size (deaths) + halo (displaced)
+//   3. Grid       — countries × years calendar of when violence was active
+//
+// Inline citations in the detail card render via the existing <Cite>
+// component, which scrolls to the references list at the bottom of the
+// page (mirrored here so navigation works without leaving the view).
+//
+// Adapted from the design handoff at design_handoff_convergence/.
+// ============================================================
+
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import {
+  EVENTS as RAW_EVENTS,
+  REGIONS as ESSAY_REGIONS,
+  COUNTRY_REGION,
+  CITATIONS,
+  Cite,
+} from './asia_violence_timeline.jsx';
+import { COUNTRY_COORDS } from './data/country_coords.js';
+
+// ============================================================
+// Helpers
+// ============================================================
+
+// Parse a casualty / displacement string from the source catalogue
+// (e.g. "2 to 6 M", "~80k", "minimal", "30 to 45 M") into a numeric
+// mid-range estimate. Used ONLY for symbol layout. The original string
+// is always what the reader sees.
+function parseEstimate(str) {
+  if (!str || typeof str !== 'string') return 0;
+  const s = str.toLowerCase().trim();
+  if (s === '' || s === 'minimal' || s === 'unknown' || s === 'none' || s === '—') return 0;
+
+  // qualitative buckets
+  if (/hundreds of thousands/.test(s)) return 300000;
+  if (/tens of thousands/.test(s)) return 30000;
+  if (/^millions cumulative/.test(s) || /\bmillions cumulative\b/.test(s)) return 2000000;
+  if (/^millions/.test(s) || /\bmillions\b/.test(s) && !/\d/.test(s)) return 2000000;
+  if (/^thousands/.test(s)) return 3000;
+  if (/^hundreds/.test(s) && !/of thousands/.test(s)) return 300;
+
+  const unitFactor = (u) => {
+    if (!u) return 1;
+    const x = u.toLowerCase();
+    if (x === 'm' || x.startsWith('mil')) return 1e6;
+    if (x === 'k' || x.startsWith('thou')) return 1e3;
+    return 1;
+  };
+
+  // range "X to Y unit" or "X-Y unit"
+  const range = s.match(/(\d+(?:\.\d+)?)\s*(?:to|-)\s*(\d+(?:\.\d+)?)\s*(m|k|million|thousand)?/);
+  if (range) {
+    const a = parseFloat(range[1]);
+    const b = parseFloat(range[2]);
+    const unit = unitFactor(range[3]);
+    return ((a + b) / 2) * unit;
+  }
+
+  // single "X unit"
+  const single = s.match(/(\d+(?:\.\d+)?)\s*(m|k|million|thousand)?/);
+  if (single) {
+    return parseFloat(single[1]) * unitFactor(single[2]);
+  }
+
+  return 0;
+}
+
+function fmt(v) {
+  if (v == null) return '—';
+  if (v >= 1e7) return Math.round(v / 1e6) + 'M';
+  if (v >= 1e6) return (v / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+  if (v >= 1e4) return Math.round(v / 1e3) + 'k';
+  if (v >= 1e3) return (v / 1e3).toFixed(1).replace(/\.0$/, '') + 'k';
+  return String(Math.round(v));
+}
+
+// Blend two hex colors. Used to darken a region color for grid cells
+// that have 2+ overlapping events.
+function mix(a, b, t) {
+  const pa = a.replace('#', '');
+  const pb = b.replace('#', '');
+  const ar = parseInt(pa.slice(0, 2), 16), ag = parseInt(pa.slice(2, 4), 16), ab = parseInt(pa.slice(4, 6), 16);
+  const br = parseInt(pb.slice(0, 2), 16), bg = parseInt(pb.slice(2, 4), 16), bb = parseInt(pb.slice(4, 6), 16);
+  const r = Math.round(ar * (1 - t) + br * t);
+  const g = Math.round(ag * (1 - t) + bg * t);
+  const bl = Math.round(ab * (1 - t) + bb * t);
+  return '#' + [r, g, bl].map(v => v.toString(16).padStart(2, '0')).join('');
+}
+
+// Simple **bold** markdown → <strong>. Used to render event notes.
+function renderBold(text, key) {
+  if (!text) return null;
+  const parts = text.split(/\*\*([^*]+)\*\*/g);
+  return parts.map((p, i) => i % 2 === 1
+    ? <strong key={`${key}-${i}`} style={{ color: 'inherit', fontWeight: 600 }}>{p}</strong>
+    : <React.Fragment key={`${key}-${i}`}>{p}</React.Fragment>
+  );
+}
+
+// ============================================================
+// Normalize EVENTS to the shape Convergence wants
+// ============================================================
+
+const EVENTS = RAW_EVENTS.map(e => ({
+  name: e.name,
+  region: e.region,
+  countries: e.countries,
+  cat: e.category === 'Political Violence' ? 'PV' : 'AC',
+  start: e.start,
+  end: e.end,
+  deaths: e.deaths,
+  displaced: e.displaced,
+  deathsEst: parseEstimate(e.deaths),
+  displacedEst: parseEstimate(e.displaced),
+  note: e.note,
+  cites: e.cites || [],
+}));
+
+const START_YEAR = 1945;
+const END_YEAR = 2026;
+const CURRENT_YEAR = new Date().getFullYear();
+const REGION_ORDER = ["West Asia", "Central Asia", "South Asia", "Southeast Asia", "East Asia"];
+
+// ============================================================
+// Main component
+// ============================================================
+
+export default function Convergence() {
+  const years = useMemo(() => {
+    const a = [];
+    for (let y = START_YEAR; y <= END_YEAR; y++) a.push(y);
+    return a;
+  }, []);
+
+  // ── theme ──────────────────────────────────────────────────────
+  const [theme, setTheme] = useState(() => {
+    if (typeof window === 'undefined') return 'dark';
+    return localStorage.getItem('avt-convergence-theme') || 'dark';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('avt-convergence-theme', theme);
+  }, [theme]);
+
+  const T = theme === 'dark' ? {
+    bg:           '#0e1118',
+    panel:        '#161a23',
+    panelAlt:     '#1d212c',
+    panelBorder:  'rgba(232,226,212,0.10)',
+    text:         '#f1ead9',
+    mute:         'rgba(232,226,212,0.65)',
+    faint:        'rgba(232,226,212,0.4)',
+    rule:         'rgba(232,226,212,0.18)',
+    accent:       '#b8956a',
+    accentInk:    '#0e1118',
+    inputBg:      '#0e1118',
+    headline:     '#f1ead9',
+    hatchInk:     'rgba(255,255,255,0.22)',
+    emptyCell:    'rgba(232,226,212,0.04)',
+    tooltipBg:    '#1d212c',
+    tooltipBorder:'rgba(232,226,212,0.18)',
+  } : {
+    bg:           '#f5f1e8',
+    panel:        '#ffffff',
+    panelAlt:     '#faf6ec',
+    panelBorder:  'rgba(45,40,30,0.10)',
+    text:         '#231d14',
+    mute:         'rgba(45,40,30,0.70)',
+    faint:        'rgba(45,40,30,0.45)',
+    rule:         'rgba(45,40,30,0.16)',
+    accent:       '#8b6a3f',
+    accentInk:    '#f5f1e8',
+    inputBg:      '#f5f1e8',
+    headline:     '#1a160f',
+    hatchInk:     'rgba(0,0,0,0.20)',
+    emptyCell:    'rgba(45,40,30,0.06)',
+    tooltipBg:    '#ffffff',
+    tooltipBorder:'rgba(45,40,30,0.22)',
+  };
+
+  // Region colors come from the essay's REGIONS map (single source of truth).
+  const regions = ESSAY_REGIONS;
+
+  // ── state ──────────────────────────────────────────────────────
+  const [cat, setCat] = useState('Both');
+  const [regionSet, setRegionSet] = useState(new Set(REGION_ORDER));
+  const [countrySet, setCountrySet] = useState(new Set());
+  const [countryMenuOpen, setCountryMenuOpen] = useState(false);
+  const [yearRange, setYearRange] = useState([START_YEAR, END_YEAR]);
+  const [pinnedCountry, setPinnedCountry] = useState(null);
+  const [scrubYear, setScrubYear] = useState(Math.min(END_YEAR, Math.max(START_YEAR, CURRENT_YEAR)));
+  const [playing, setPlaying] = useState(false);
+
+  const [mapHover, setMapHover] = useState(null);
+  const [gridHover, setGridHover] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedCell, setSelectedCell] = useState(null);
+
+  const [vw, setVw] = useState(typeof window !== 'undefined' ? window.innerWidth : 1280);
+  useEffect(() => {
+    const onR = () => setVw(window.innerWidth);
+    window.addEventListener('resize', onR);
+    return () => window.removeEventListener('resize', onR);
+  }, []);
+  const isPhone = vw < 700;
+  const isTablet = vw >= 700 && vw < 1100;
+  const isDesktop = vw >= 1100;
+
+  // Country list shown in dropdown is tied to active region filter.
+  const COUNTRY_BY_REGION = useMemo(() => {
+    const m = {};
+    EVENTS.forEach(e => e.countries.forEach(c => { if (!m[c]) m[c] = e.region; }));
+    return m;
+  }, []);
+  const ALL_COUNTRIES = useMemo(() =>
+    Object.keys(COUNTRY_BY_REGION)
+      .filter(c => regionSet.has(COUNTRY_BY_REGION[c]))
+      .sort((a, b) => {
+        const ra = REGION_ORDER.indexOf(COUNTRY_BY_REGION[a]);
+        const rb = REGION_ORDER.indexOf(COUNTRY_BY_REGION[b]);
+        if (ra !== rb) return ra - rb;
+        return a.localeCompare(b);
+      }), [COUNTRY_BY_REGION, regionSet]);
+
+  // Drop selected countries that fall outside the visible region set.
+  useEffect(() => {
+    if (countrySet.size === 0) return;
+    const visible = new Set(ALL_COUNTRIES);
+    let changed = false;
+    const next = new Set();
+    countrySet.forEach(c => { if (visible.has(c)) next.add(c); else changed = true; });
+    if (changed) setCountrySet(next);
+  }, [regionSet]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Filtered events.
+  const events = useMemo(() => EVENTS.filter(e => {
+    if (cat === 'AC' && e.cat !== 'AC') return false;
+    if (cat === 'PV' && e.cat !== 'PV') return false;
+    if (!regionSet.has(e.region)) return false;
+    if (countrySet.size > 0 && !e.countries.some(c => countrySet.has(c))) return false;
+    if (e.end < yearRange[0] || e.start > yearRange[1]) return false;
+    return true;
+  }), [cat, regionSet, countrySet, yearRange]);
+
+  const countryRegion = useMemo(() => {
+    const m = {};
+    events.forEach(e => e.countries.forEach(c => { if (!m[c]) m[c] = e.region; }));
+    return m;
+  }, [events]);
+  const countries = useMemo(() =>
+    Object.keys(countryRegion).sort((a, b) => {
+      const ra = REGION_ORDER.indexOf(countryRegion[a]);
+      const rb = REGION_ORDER.indexOf(countryRegion[b]);
+      if (ra !== rb) return ra - rb;
+      return a.localeCompare(b);
+    }), [countryRegion]);
+
+  // Grid presence — which catalogue events cover (country, year).
+  const grid = useMemo(() => {
+    const g = {};
+    countries.forEach(c => {
+      g[c] = {};
+      years.forEach(y => g[c][y] = { evs: [], hasPV: false, hasAC: false });
+    });
+    events.forEach(e => {
+      e.countries.forEach(c => {
+        if (!g[c]) return;
+        for (let y = e.start; y <= e.end; y++) {
+          g[c][y].evs.push(e);
+          if (e.cat === 'PV') g[c][y].hasPV = true; else g[c][y].hasAC = true;
+        }
+      });
+    });
+    return g;
+  }, [events, countries, years]);
+
+  const yearTotals = useMemo(() => {
+    const t = {};
+    years.forEach(y => {
+      const s = new Set();
+      countries.forEach(c => grid[c][y].evs.forEach(e => s.add(e.name)));
+      t[y] = s.size;
+    });
+    return t;
+  }, [grid, countries, years]);
+
+  const periodTotals = useMemo(() => {
+    const overlapping = events.filter(e => e.end >= yearRange[0] && e.start <= yearRange[1]);
+    return { evCount: overlapping.length, events: overlapping };
+  }, [events, yearRange]);
+
+  useEffect(() => {
+    if (scrubYear < yearRange[0]) setScrubYear(yearRange[0]);
+    else if (scrubYear > yearRange[1]) setScrubYear(yearRange[1]);
+  }, [yearRange]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!playing) return;
+    const id = setInterval(() => {
+      setScrubYear(y => y >= yearRange[1] ? yearRange[0] : y + 1);
+    }, 600);
+    return () => clearInterval(id);
+  }, [playing, yearRange]);
+
+  const activeInYear = useMemo(
+    () => events.filter(e => e.start <= scrubYear && e.end >= scrubYear),
+    [events, scrubYear]
+  );
+
+  // ── Symbol sizing ────────────────────────────────────────────
+  const MAX_DEATHS = 45_000_000;
+  const MAX_DISPLACED = 25_000_000;
+  const phoneMul = isPhone ? 0.8 : 1;
+  const sqRange = (v, max, minR, maxR) => {
+    if (!v || v <= 0) return minR;
+    const t = Math.sqrt(v) / Math.sqrt(max);
+    return Math.max(minR, Math.min(maxR, minR + t * (maxR - minR)));
+  };
+  const radiusForDeaths = (d) => sqRange(d, MAX_DEATHS, 3, 28) * phoneMul;
+  const radiusForDisplaced = (disp) => sqRange(disp, MAX_DISPLACED, 0, 38) * phoneMul;
+
+  const cellColor = (evCount, region) => {
+    if (!evCount || !regions[region]) return 'transparent';
+    const c = regions[region].color;
+    const alpha = evCount === 1 ? 0.55 : evCount === 2 ? 0.8 : 0.95;
+    return `${c}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`;
+  };
+
+  // ── Map projection ───────────────────────────────────────────
+  const mapAspect = 760 / 460;
+  const mapW = isPhone ? Math.min(vw - 48, 480) : isTablet ? Math.min(vw - 80, 660) : 760;
+  const mapH = mapW / mapAspect;
+  const minLon = 28, maxLon = 145, minLat = -12, maxLat = 56;
+  const project = (lon, lat) => [
+    ((lon - minLon) / (maxLon - minLon)) * mapW,
+    mapH - ((lat - minLat) / (maxLat - minLat)) * mapH,
+  ];
+
+  const visibleCountries = pinnedCountry && countries.includes(pinnedCountry)
+    ? [pinnedCountry] : countries;
+  const cellBase = 12.5;
+  const cellH = pinnedCountry ? 35 : (isPhone ? Math.max(9, cellBase - 2) : cellBase);
+  const labelFontSize = pinnedCountry ? 18 : (isPhone ? 10 : 11);
+  const labelW = isPhone ? 86 : 110;
+
+  const mapRef = useRef(null);
+  const trackRef = useRef(null);
+  const draggingRef = useRef(null);
+
+  // ── Filter helpers ───────────────────────────────────────────
+  const toggleRegion = (r) => {
+    const s = new Set(regionSet);
+    if (s.has(r)) s.delete(r); else s.add(r);
+    if (s.size === 0) s.add(r);
+    setRegionSet(s);
+  };
+  const toggleCountry = (c) => {
+    const s = new Set(countrySet);
+    if (s.has(c)) {
+      s.delete(c);
+    } else {
+      s.add(c);
+      const r = COUNTRY_BY_REGION[c];
+      if (r && !regionSet.has(r)) {
+        const rs = new Set(regionSet); rs.add(r); setRegionSet(rs);
+      }
+    }
+    setCountrySet(s);
+  };
+  const resetFilters = () => {
+    setCat('Both');
+    setRegionSet(new Set(REGION_ORDER));
+    setCountrySet(new Set());
+    setYearRange([START_YEAR, END_YEAR]);
+    setPinnedCountry(null);
+    setSelectedEvent(null);
+    setSelectedCell(null);
+  };
+
+  // ── Dual-handle range slider ─────────────────────────────────
+  const yearAtClientX = (clientX) => {
+    const t = trackRef.current;
+    if (!t) return START_YEAR;
+    const r = t.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    return Math.round(START_YEAR + pct * (END_YEAR - START_YEAR));
+  };
+  useEffect(() => {
+    const move = (e) => {
+      if (!draggingRef.current) return;
+      const cx = e.touches ? e.touches[0].clientX : e.clientX;
+      const y = yearAtClientX(cx);
+      if (draggingRef.current === 'min') setYearRange(([a, b]) => [Math.min(y, b - 1), b]);
+      else setYearRange(([a, b]) => [a, Math.max(y, a + 1)]);
+    };
+    const up = () => { draggingRef.current = null; };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+    window.addEventListener('touchmove', move);
+    window.addEventListener('touchend', up);
+    return () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      window.removeEventListener('touchmove', move);
+      window.removeEventListener('touchend', up);
+    };
+  }, []);
+  const yrToPct = (y) => ((y - START_YEAR) / (END_YEAR - START_YEAR)) * 100;
+
+  // ── Tooltip move handlers ────────────────────────────────────
+  const onSymbolMove = (ev, e) => {
+    const r = mapRef.current && mapRef.current.getBoundingClientRect();
+    if (!r) return;
+    setMapHover({ event: e, x: ev.clientX - r.left, y: ev.clientY - r.top });
+  };
+  const onCellMove = (ev, country, year) => {
+    setGridHover({ country, year, x: ev.clientX, y: ev.clientY });
+  };
+
+  // ── Detail card precedence ───────────────────────────────────
+  let detailMode = 'year';
+  if (selectedEvent) detailMode = 'event';
+  else if (selectedCell) detailMode = 'cell';
+
+  return (
+    <div style={{
+      background: T.bg, color: T.text, minHeight: '100vh',
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+      transition: 'background-color 180ms ease, color 180ms ease',
+    }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@300;400;500&family=JetBrains+Mono:wght@300;400&display=swap');
+        .cv-serif { font-family:'Cormorant Garamond', Georgia, serif; }
+        .cv-mono  { font-family:'JetBrains Mono', ui-monospace, monospace; letter-spacing:.04em; }
+        .cv-cell  { transition: filter .12s ease; }
+        .cv-cell:hover { filter: brightness(1.7) saturate(1.4); outline:1px solid ${T.text}; outline-offset:-1px; }
+        .cv-sym   { cursor: pointer; transition: transform .1s ease; transform-origin: center; transform-box: fill-box; }
+        .cv-sym:hover { transform: scale(1.12); }
+        .cv-chip-x { opacity:.6; } .cv-chip:hover .cv-chip-x { opacity:1; }
+        @media (prefers-reduced-motion: reduce) {
+          .cv-sym, .cv-cell { transition: none !important; }
+        }
+      `}</style>
+
+      {/* HEADER */}
+      <header style={{
+        padding: isPhone ? '24px 18px 12px' : '38px 48px 12px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+        gap: 18, flexWrap: 'wrap',
+      }}>
+        <div style={{ flex: 1, minWidth: 280 }}>
+          <div className="cv-mono" style={{
+            fontSize: 10, letterSpacing: '.3em', color: T.accent, marginBottom: 10,
+          }}>
+            ASIA · POLITICAL VIOLENCE AND ARMED CONFLICT · 1945 TO 2026
+          </div>
+          <h1 className="cv-serif" style={{
+            fontSize: isPhone ? 28 : isTablet ? 36 : 44, fontWeight: 500,
+            lineHeight: 1, margin: '0 0 8px', color: T.headline,
+          }}>
+            Where It Happened, <span style={{ fontStyle: 'italic', color: T.accent }}>When It Happened.</span>
+          </h1>
+          <p style={{
+            fontSize: isPhone ? 12.5 : 13.5, lineHeight: 1.55, maxWidth: 780,
+            color: T.mute, margin: 0,
+          }}>
+            <strong style={{ color: T.text }}>Shape encodes category</strong> (filled circle for armed conflict, diamond for political violence).{' '}
+            <strong style={{ color: T.text }}>Solid core sizes by people killed</strong>.{' '}
+            <strong style={{ color: T.text }}>Translucent halo sizes by people displaced</strong>.{' '}
+            Click any symbol to read the event below.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <a href="?" className="cv-mono" style={{
+            background: T.panel, color: T.mute, border: '1px solid ' + T.rule,
+            padding: '7px 14px', fontSize: 10, letterSpacing: '.2em',
+            borderRadius: 99, cursor: 'pointer', textDecoration: 'none',
+          }}>
+            ← BACK TO ESSAY
+          </a>
+          <button
+            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+            className="cv-mono"
+            style={{
+              background: T.panel, color: T.text, border: '1px solid ' + T.rule,
+              padding: '7px 14px', fontSize: 10, letterSpacing: '.2em',
+              borderRadius: 99, cursor: 'pointer',
+            }}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+          >
+            {theme === 'dark' ? '☼ LIGHT' : '☾ DARK'}
+          </button>
+        </div>
+      </header>
+
+      {/* DASHBOARD */}
+      <div style={{ padding: isPhone ? '0 18px 16px' : '8px 48px 18px' }}>
+        <div style={{
+          background: T.panel, border: '1px solid ' + T.panelBorder,
+          borderRadius: 6, padding: isPhone ? '14px' : '18px 22px',
+        }}>
+
+          {/* Filter rows */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'flex-start', marginBottom: 18 }}>
+            <FilterGroup label="CATEGORY" T={T}>
+              {[['Both', 'BOTH'], ['AC', 'ARMED CONFLICT'], ['PV', 'POLITICAL VIOLENCE']].map(([k, lbl]) => (
+                <button key={k} onClick={() => setCat(k)} className="cv-mono"
+                        style={pill(cat === k, T.accent, isPhone, theme)}>{lbl}</button>
+              ))}
+            </FilterGroup>
+
+            <FilterGroup label="REGION" T={T}>
+              {REGION_ORDER.map(r => (
+                <button key={r} onClick={() => toggleRegion(r)} className="cv-mono"
+                        style={pill(regionSet.has(r), regions[r].color, isPhone, theme)}>
+                  {isPhone ? r.split(' ')[0].toUpperCase() : r.toUpperCase()}
+                </button>
+              ))}
+            </FilterGroup>
+
+            <FilterGroup label={`COUNTRY${countrySet.size ? ` · ${countrySet.size}` : ''}`} T={T}>
+              <div style={{ position: 'relative' }}>
+                <button onClick={() => setCountryMenuOpen(o => !o)} className="cv-mono"
+                        style={{
+                          ...pill(countrySet.size > 0, T.accent, isPhone, theme),
+                          background: countrySet.size > 0 ? T.accent : T.inputBg,
+                          color: countrySet.size > 0 ? T.accentInk : T.text,
+                          border: '1px solid ' + (countrySet.size > 0 ? T.accent : T.rule),
+                          display: 'flex', alignItems: 'center', gap: 6,
+                        }}>
+                  {countrySet.size === 0 ? 'ALL COUNTRIES' : `${countrySet.size} SELECTED`}
+                  <span style={{ fontSize: 8 }}>{countryMenuOpen ? '▲' : '▼'}</span>
+                </button>
+                {countryMenuOpen && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 30,
+                    background: T.panelAlt, border: '1px solid ' + T.rule, borderRadius: 4,
+                    width: isPhone ? 240 : 280, boxShadow: '0 6px 24px rgba(0,0,0,.3)',
+                    display: 'flex', flexDirection: 'column', maxHeight: 340,
+                  }}>
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      padding: '10px 12px', borderBottom: '1px solid ' + T.rule, flexShrink: 0,
+                    }}>
+                      <span className="cv-mono" style={{ fontSize: 9, color: T.faint, letterSpacing: '.22em' }}>
+                        {ALL_COUNTRIES.length} COUNTRIES
+                      </span>
+                      {countrySet.size > 0 && (
+                        <button onClick={() => setCountrySet(new Set())} className="cv-mono" style={{
+                          background: 'none', border: 'none', color: T.accent, fontSize: 9,
+                          cursor: 'pointer', letterSpacing: '.15em',
+                        }}>CLEAR</button>
+                      )}
+                    </div>
+                    <div style={{
+                      display: 'flex', flexDirection: 'column', gap: 2,
+                      overflowY: 'auto', overflowX: 'hidden',
+                      padding: '8px 10px 10px', flex: 1, WebkitOverflowScrolling: 'touch',
+                    }}>
+                      {REGION_ORDER.filter(r => regionSet.has(r)).map(r => {
+                        const inR = ALL_COUNTRIES.filter(c => COUNTRY_BY_REGION[c] === r);
+                        if (!inR.length) return null;
+                        return (
+                          <div key={r}>
+                            <div className="cv-mono" style={{
+                              fontSize: 8.5, color: regions[r].color,
+                              letterSpacing: '.22em', padding: '6px 6px 2px',
+                            }}>{r.toUpperCase()}</div>
+                            {inR.map(c => (
+                              <label key={c} style={{
+                                display: 'flex', alignItems: 'center', gap: 8,
+                                padding: '4px 6px', cursor: 'pointer', borderRadius: 3,
+                                background: countrySet.has(c) ? T.accent + '22' : 'transparent',
+                              }}>
+                                <input
+                                  type="checkbox"
+                                  checked={countrySet.has(c)}
+                                  onChange={() => toggleCountry(c)}
+                                  style={{ accentColor: T.accent }}
+                                />
+                                <span style={{ fontSize: 12, color: T.text }} className="cv-serif">{c}</span>
+                              </label>
+                            ))}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+              {[...countrySet].slice(0, 6).map(c => (
+                <button key={c} onClick={() => toggleCountry(c)} className="cv-mono cv-chip" style={{
+                  background: T.accent + '22', color: T.text,
+                  border: '1px solid ' + T.accent + '66',
+                  padding: '3px 8px', fontSize: 9.5, letterSpacing: '.1em',
+                  borderRadius: 99, cursor: 'pointer',
+                  display: 'inline-flex', gap: 6, alignItems: 'center',
+                }}>
+                  {c}<span className="cv-chip-x">✕</span>
+                </button>
+              ))}
+              {countrySet.size > 6 && (
+                <span className="cv-mono" style={{ fontSize: 9.5, color: T.mute }}>
+                  +{countrySet.size - 6} more
+                </span>
+              )}
+            </FilterGroup>
+
+            <button onClick={resetFilters} className="cv-mono" style={{
+              marginLeft: 'auto', alignSelf: 'flex-end',
+              background: 'transparent', color: T.mute,
+              border: '1px solid ' + T.rule, padding: '5px 12px',
+              fontSize: 9.5, letterSpacing: '.2em', borderRadius: 99, cursor: 'pointer',
+            }}>
+              ↺ RESET ALL
+            </button>
+          </div>
+
+          {/* TIME PERIOD */}
+          <div style={{ marginBottom: 18 }}>
+            <div className="cv-mono" style={{
+              fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 10,
+              display: 'flex', justifyContent: 'space-between',
+            }}>
+              <span>TIME PERIOD · DRAG HANDLES TO TRIM</span>
+              <span style={{ color: T.text, fontVariantNumeric: 'tabular-nums' }}>
+                {yearRange[0]} → {yearRange[1]}{' '}
+                <span style={{ color: T.faint }}>({yearRange[1] - yearRange[0] + 1} yrs)</span>
+              </span>
+            </div>
+            <div ref={trackRef} style={{ position: 'relative', height: 34, margin: '0 12px' }}>
+              <div style={{
+                position: 'absolute', left: 0, right: 0, top: 16, height: 2,
+                background: T.rule, borderRadius: 2,
+              }}/>
+              <div style={{
+                position: 'absolute',
+                left: `${yrToPct(yearRange[0])}%`,
+                right: `${100 - yrToPct(yearRange[1])}%`,
+                top: 16, height: 2, background: T.accent,
+              }}/>
+              <div
+                onMouseDown={() => draggingRef.current = 'min'}
+                onTouchStart={() => draggingRef.current = 'min'}
+                role="slider"
+                aria-label="Start year"
+                aria-valuemin={START_YEAR}
+                aria-valuemax={END_YEAR}
+                aria-valuenow={yearRange[0]}
+                style={{
+                  position: 'absolute', left: `${yrToPct(yearRange[0])}%`,
+                  top: 7, transform: 'translateX(-50%)',
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: T.accent, border: `3px solid ${T.panel}`,
+                  boxShadow: '0 1px 4px rgba(0,0,0,.3)',
+                  cursor: 'grab', touchAction: 'none',
+                }}
+              />
+              <div
+                onMouseDown={() => draggingRef.current = 'max'}
+                onTouchStart={() => draggingRef.current = 'max'}
+                role="slider"
+                aria-label="End year"
+                aria-valuemin={START_YEAR}
+                aria-valuemax={END_YEAR}
+                aria-valuenow={yearRange[1]}
+                style={{
+                  position: 'absolute', left: `${yrToPct(yearRange[1])}%`,
+                  top: 7, transform: 'translateX(-50%)',
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: T.accent, border: `3px solid ${T.panel}`,
+                  boxShadow: '0 1px 4px rgba(0,0,0,.3)',
+                  cursor: 'grab', touchAction: 'none',
+                }}
+              />
+              {[1945, 1960, 1975, 1990, 2005, 2020].map(y => (
+                <div key={y} style={{
+                  position: 'absolute', left: `${yrToPct(y)}%`, top: 26,
+                  transform: 'translateX(-50%)',
+                }} className="cv-mono">
+                  <span style={{ fontSize: 9, color: T.faint }}>{y}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* TWO-COLUMN STATS */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: isPhone ? '1fr' : '1fr 1fr',
+            gap: isPhone ? 14 : 24, alignItems: 'stretch',
+          }}>
+            <StatsColumn
+              T={T} isPhone={isPhone}
+              heading={`WITHIN PERIOD · ${yearRange[0]} TO ${yearRange[1]}`}
+              subheading="Events in the catalogue overlapping this range. Death and displacement figures are listed per event, exactly as recorded."
+              items={[
+                { label: 'Events overlapping range', value: periodTotals.evCount, big: true, color: T.accent },
+                { label: 'Armed conflict', value: periodTotals.events.filter(e => e.cat === 'AC').length },
+                { label: 'Political violence', value: periodTotals.events.filter(e => e.cat === 'PV').length },
+              ]}
+            />
+            <StatsColumn
+              T={T} isPhone={isPhone}
+              heading={`IN ${scrubYear} ONLY`}
+              subheading="Number of catalogue events whose duration covers this year."
+              tone="alt"
+              items={[
+                { label: 'Events active', value: activeInYear.length, big: true, color: T.accent },
+                { label: 'Armed conflict', value: activeInYear.filter(e => e.cat === 'AC').length },
+                { label: 'Political violence', value: activeInYear.filter(e => e.cat === 'PV').length },
+              ]}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* YEAR SCRUBBER + HISTOGRAM */}
+      <div style={{ padding: isPhone ? '0 18px 14px' : '0 48px 18px' }}>
+        <div style={{
+          background: T.panel, border: '1px solid ' + T.panelBorder,
+          borderRadius: 6, padding: isPhone ? '12px 14px' : '14px 18px',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            gap: 14, marginBottom: 12, flexWrap: 'wrap',
+          }}>
+            <div className="cv-mono" style={{ fontSize: 9, letterSpacing: '.22em', color: T.faint }}>
+              WHEN IT HAPPENED · CLICK A BAR TO FOCUS A YEAR · PLAY STEPS THROUGH CONCURRENT EVENTS
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <button onClick={() => setPlaying(p => !p)} className="cv-mono" style={{
+                background: playing ? T.accent : 'transparent',
+                color: playing ? T.accentInk : T.accent,
+                border: '1px solid ' + T.accent,
+                padding: '6px 14px', fontSize: 10, letterSpacing: '.2em',
+                borderRadius: 99, cursor: 'pointer', flexShrink: 0,
+              }}>
+                {playing ? '■ PAUSE' : '▶ PLAY'}
+              </button>
+              <span className="cv-serif" style={{
+                fontSize: isPhone ? 22 : 28, fontWeight: 500, color: T.text,
+                fontVariantNumeric: 'tabular-nums', minWidth: 64,
+              }}>{scrubYear}</span>
+            </div>
+          </div>
+          <YearHistogram
+            T={T}
+            years={years}
+            yearRange={yearRange}
+            yearTotals={yearTotals}
+            selectedYear={scrubYear}
+            onSelect={(y) => { setScrubYear(y); setPlaying(false); }}
+            isPhone={isPhone}
+          />
+        </div>
+      </div>
+
+      {/* MAP + GRID */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isDesktop ? `minmax(0, ${mapW + 40}px) 1fr` : '1fr',
+        gap: isPhone ? 14 : 20,
+        padding: isPhone ? '0 18px 18px' : '0 48px 20px',
+        alignItems: 'start',
+      }}>
+
+        {/* MAP */}
+        <div ref={mapRef} style={{
+          background: T.panel, border: '1px solid ' + T.panelBorder,
+          borderRadius: 6, padding: isPhone ? 12 : 18, position: 'relative',
+        }} onMouseLeave={() => setMapHover(null)}>
+          <div className="cv-mono" style={{
+            fontSize: 9, letterSpacing: '.25em', color: T.mute, marginBottom: 8,
+          }}>
+            MAP · {scrubYear} · {activeInYear.length} ACTIVE EVENT{activeInYear.length === 1 ? '' : 'S'}
+          </div>
+          <svg viewBox={`0 0 ${mapW} ${mapH}`} style={{
+            width: '100%', height: 'auto', display: 'block', maxWidth: '100%',
+          }}>
+            {/* Graticule */}
+            <g opacity={theme === 'dark' ? 0.18 : 0.12}>
+              {[40, 60, 80, 100, 120, 140].map(lon => {
+                const [x] = project(lon, 0);
+                return <line key={`v${lon}`} x1={x} y1={0} x2={x} y2={mapH}
+                  stroke={T.text} strokeWidth=".4" strokeDasharray="2 4"/>;
+              })}
+              {[0, 20, 40].map(lat => {
+                const [, y] = project(0, lat);
+                return <line key={`h${lat}`} x1={0} y1={y} x2={mapW} y2={y}
+                  stroke={T.text} strokeWidth=".4" strokeDasharray="2 4"/>;
+              })}
+            </g>
+
+            {/* Symbols for active-in-year events */}
+            {activeInYear.flatMap(e => e.countries.map(c => {
+              if (!COUNTRY_COORDS[c]) return null;
+              const [x, y] = project(COUNTRY_COORDS[c].lon, COUNTRY_COORDS[c].lat);
+              const rCore = radiusForDeaths(e.deathsEst);
+              const rHalo = radiusForDisplaced(e.displacedEst || 0);
+              const col = regions[e.region].color;
+              const isSel = selectedEvent && selectedEvent.name === e.name;
+              const dim = (mapHover && mapHover.event.name !== e.name) || (selectedEvent && !isSel);
+              const isPV = e.cat === 'PV';
+              const diamond = `${x},${y - rCore} ${x + rCore},${y} ${x},${y + rCore} ${x - rCore},${y}`;
+              const haloDiamond = rHalo > rCore
+                ? `${x},${y - rHalo} ${x + rHalo},${y} ${x},${y + rHalo} ${x - rHalo},${y}` : null;
+              return (
+                <g key={`${e.name}-${c}`} className="cv-sym"
+                   onMouseMove={(ev) => onSymbolMove(ev, e)}
+                   onMouseLeave={() => setMapHover(null)}
+                   onClick={() => { setSelectedEvent(e); setSelectedCell(null); }}
+                   role="button"
+                   aria-label={`${e.name}, ${e.start} to ${e.end}, ${e.deaths} killed`}
+                   tabIndex={0}>
+                  {rHalo > rCore && (isPV
+                    ? <polygon points={haloDiamond} fill={col} opacity={dim ? 0.08 : 0.18}/>
+                    : <circle cx={x} cy={y} r={rHalo} fill={col} opacity={dim ? 0.08 : 0.18}/>
+                  )}
+                  {isPV
+                    ? <polygon points={diamond} fill={col} opacity={dim ? 0.55 : 1}
+                        stroke={isSel ? T.text : 'none'} strokeWidth={isSel ? 1.5 : 0}/>
+                    : <circle cx={x} cy={y} r={rCore} fill={col} opacity={dim ? 0.55 : 1}
+                        stroke={isSel ? T.text : 'none'} strokeWidth={isSel ? 1.5 : 0}/>}
+                </g>
+              );
+            }))}
+
+            {/* Region labels */}
+            {!isPhone && [
+              ["West Asia", 44, 36],
+              ["Central Asia", 67, 48],
+              ["South Asia", 78, 17],
+              ["Southeast Asia", 108, 3],
+              ["East Asia", 118, 44],
+            ].map(([name, lon, lat]) => {
+              const [x, y] = project(lon, lat);
+              return <text key={name} x={x} y={y} fontSize="9"
+                fill={regions[name].color} opacity=".55"
+                fontFamily="'JetBrains Mono'" letterSpacing="1.5"
+                textAnchor="middle">{name.toUpperCase()}</text>;
+            })}
+          </svg>
+
+          {/* MAP TOOLTIP */}
+          {mapHover && (
+            <div style={{
+              position: 'absolute',
+              left: Math.min(mapHover.x + 14, mapW - 240),
+              top: Math.max(40, mapHover.y - 10),
+              background: T.tooltipBg, border: '1px solid ' + T.tooltipBorder,
+              borderRadius: 4, padding: '10px 12px', pointerEvents: 'none',
+              minWidth: 200, maxWidth: 240, boxShadow: '0 4px 16px rgba(0,0,0,.25)', zIndex: 10,
+            }}>
+              <div className="cv-mono" style={{
+                fontSize: 8.5, letterSpacing: '.22em',
+                color: regions[mapHover.event.region].color, marginBottom: 4,
+              }}>
+                {mapHover.event.cat === 'PV' ? 'POLITICAL VIOLENCE' : 'ARMED CONFLICT'} · {mapHover.event.region.toUpperCase()}
+              </div>
+              <div className="cv-serif" style={{
+                fontSize: 15, fontWeight: 500, color: T.text, lineHeight: 1.2, marginBottom: 6,
+              }}>{mapHover.event.name}</div>
+              <div className="cv-mono" style={{ fontSize: 9.5, color: T.mute, marginBottom: 8 }}>
+                {mapHover.event.start === mapHover.event.end
+                  ? mapHover.event.start
+                  : `${mapHover.event.start} to ${mapHover.event.end}`}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Row T={T} mark="●" label="Killed" value={mapHover.event.deaths}/>
+                <Row T={T} mark="○" label="Displaced" value={mapHover.event.displaced || '—'}/>
+              </div>
+            </div>
+          )}
+
+          {/* MAP LEGEND */}
+          <div style={{
+            display: 'flex', gap: isPhone ? 14 : 22, marginTop: 14, paddingTop: 12,
+            borderTop: '1px solid ' + T.rule, flexWrap: 'wrap', alignItems: 'flex-end',
+          }}>
+            <div>
+              <div className="cv-mono" style={{
+                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 8,
+              }}>SHAPE = CATEGORY</div>
+              <svg width="170" height="36" style={{ display: 'block' }}>
+                <circle cx={18} cy={16} r={9} fill={T.accent}/>
+                <text x={34} y={20} fontSize="11" fill={T.text} fontFamily="'DM Sans'">Armed</text>
+                {(() => {
+                  const x = 100, y = 16, r = 9;
+                  const pts = `${x},${y - r} ${x + r},${y} ${x},${y + r} ${x - r},${y}`;
+                  return <polygon points={pts} fill={T.accent}/>;
+                })()}
+                <text x={116} y={20} fontSize="11" fill={T.text} fontFamily="'DM Sans'">Political</text>
+              </svg>
+            </div>
+            <div>
+              <div className="cv-mono" style={{
+                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 8,
+              }}>CORE SIZE = KILLED</div>
+              <svg width="220" height="42" style={{ display: 'block' }}>
+                {[1e3, 1e5, 1e7, MAX_DEATHS].map((v, i, arr) => {
+                  const r = radiusForDeaths(v);
+                  const cx = arr.slice(0, i).reduce((s, vv) => s + radiusForDeaths(vv) * 2 + 14, r + 6);
+                  return (
+                    <g key={v}>
+                      <circle cx={cx} cy={20} r={r} fill={T.accent}/>
+                      <text x={cx} y={40} fontSize="9" fill={T.mute}
+                        fontFamily="'JetBrains Mono'" textAnchor="middle">{fmt(v)}</text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+            <div>
+              <div className="cv-mono" style={{
+                fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 8,
+              }}>HALO SIZE = DISPLACED</div>
+              <svg width="220" height="42" style={{ display: 'block' }}>
+                {[1e5, 1e6, 1e7].map((v, i, arr) => {
+                  const r = radiusForDisplaced(v);
+                  const cx = arr.slice(0, i).reduce((s, vv) => s + radiusForDisplaced(vv) * 2 + 14, r + 6);
+                  return (
+                    <g key={v}>
+                      <circle cx={cx} cy={20} r={r} fill={T.accent} opacity=".22"/>
+                      <circle cx={cx} cy={20} r={3} fill={T.accent}/>
+                      <text x={cx} y={40} fontSize="9" fill={T.mute}
+                        fontFamily="'JetBrains Mono'" textAnchor="middle">{fmt(v)}</text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+            {pinnedCountry && (
+              <button onClick={() => setPinnedCountry(null)} className="cv-mono" style={{
+                marginLeft: 'auto', background: 'transparent', color: T.accent,
+                border: '1px solid ' + T.accent, padding: '4px 10px',
+                fontSize: 9, letterSpacing: '.2em', borderRadius: 99, cursor: 'pointer',
+              }}>
+                ✕ UNPIN {pinnedCountry.toUpperCase()}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* GRID */}
+        <div style={{
+          background: T.panel, border: '1px solid ' + T.panelBorder,
+          borderRadius: 6, padding: isPhone ? '12px' : '14px 16px',
+          position: 'relative', overflowX: 'auto',
+        }} onMouseLeave={() => setGridHover(null)}>
+          <div style={{ marginBottom: 12 }}>
+            <div className="cv-mono" style={{
+              fontSize: 9, letterSpacing: '.25em', color: T.mute,
+              display: 'flex', justifyContent: 'space-between', gap: 8,
+            }}>
+              <span>WHEN AND WHERE · {pinnedCountry
+                ? `${pinnedCountry.toUpperCase()} ONLY`
+                : `${countries.length} COUNTRIES × ${years.length} YEARS`}</span>
+              <span style={{ color: T.faint }}>CLICK COUNTRY → PIN · CLICK CELL → OPEN</span>
+            </div>
+            <div style={{
+              fontSize: 12, color: T.text, marginTop: 6, maxWidth: 780, lineHeight: 1.5,
+            }}>
+              For each country, in each year, was a catalogue event under way? Reads as a calendar of where violence was happening at the same time.
+            </div>
+            <div style={{
+              display: 'flex', gap: 18, marginTop: 10, flexWrap: 'wrap', alignItems: 'center',
+            }}>
+              <LegendSwatch T={T} color={regions['East Asia'].color} label="Region color" mono/>
+              <LegendSwatch T={T} color={regions['East Asia'].color} darker label="2+ events overlap" mono/>
+              <LegendSwatch T={T} hatch label="Political violence only" mono/>
+              <LegendSwatch T={T} empty label="No event" mono/>
+            </div>
+          </div>
+          <div style={{
+            minWidth: isPhone ? 560 : 'auto',
+            display: 'grid', gridTemplateColumns: `${labelW}px 1fr`,
+            gap: 8, alignItems: 'stretch',
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {visibleCountries.map(c => (
+                <div key={c}
+                  onClick={() => setPinnedCountry(pinnedCountry === c ? null : c)}
+                  style={{
+                    height: cellH, display: 'flex', alignItems: 'center',
+                    justifyContent: 'flex-end', gap: 6, paddingRight: 4, cursor: 'pointer',
+                  }}>
+                  <span className="cv-serif" style={{
+                    fontSize: labelFontSize,
+                    color: pinnedCountry === c ? T.text : T.mute,
+                  }}>{c}</span>
+                  <span style={{
+                    width: 5, height: 5, borderRadius: 99,
+                    background: regions[countryRegion[c]].color, flexShrink: 0,
+                  }}/>
+                </div>
+              ))}
+              {visibleCountries.length === 0 && (
+                <div className="cv-serif" style={{
+                  fontStyle: 'italic', color: T.faint, fontSize: 14, padding: '10px 0',
+                }}>No countries match filters.</div>
+              )}
+            </div>
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${years.length}, 1fr)`,
+                gap: 1, alignContent: 'start',
+              }}>
+                {visibleCountries.map(c =>
+                  years.map(y => {
+                    const d = grid[c][y];
+                    const inRange = y >= yearRange[0] && y <= yearRange[1];
+                    const fill = inRange ? cellColor(d.evs.length, countryRegion[c]) : 'transparent';
+                    const hasEvent = d.evs.length > 0;
+                    return (
+                      <div key={c + y} className="cv-cell"
+                        onMouseMove={(ev) => hasEvent && inRange && onCellMove(ev, c, y)}
+                        onMouseLeave={() => setGridHover(null)}
+                        onClick={() => {
+                          if (hasEvent && inRange) {
+                            const evs = [...new Map(d.evs.map(e => [e.name, e])).values()];
+                            if (evs.length === 1) {
+                              setSelectedEvent(evs[0]); setSelectedCell(null);
+                            } else {
+                              setSelectedCell({ country: c, year: y }); setSelectedEvent(null);
+                            }
+                            setScrubYear(y);
+                          }
+                        }}
+                        style={{
+                          height: cellH, background: fill,
+                          border: !hasEvent || !inRange ? '1px solid ' + T.emptyCell : 'none',
+                          cursor: hasEvent && inRange ? 'pointer' : 'default',
+                          position: 'relative', opacity: inRange ? 1 : 0.25,
+                        }}>
+                        {d.hasPV && !d.hasAC && inRange && (
+                          <div style={{
+                            position: 'absolute', inset: 0,
+                            background: `repeating-linear-gradient(45deg, ${T.hatchInk} 0 1.5px, transparent 1.5px 4px)`,
+                            pointerEvents: 'none',
+                          }}/>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              {(() => {
+                const pct = (scrubYear - START_YEAR) / (END_YEAR - START_YEAR) * 100;
+                return (
+                  <div style={{
+                    position: 'absolute', top: -6, bottom: -6,
+                    left: `${pct}%`, width: 2,
+                    background: T.text, boxShadow: `0 0 8px ${T.accent}80`,
+                    pointerEvents: 'none',
+                  }}/>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* GRID TOOLTIP (viewport-fixed so it escapes overflow clipping) */}
+      {gridHover && grid[gridHover.country] && grid[gridHover.country][gridHover.year]
+        && grid[gridHover.country][gridHover.year].evs.length > 0 && (() => {
+        const cell = grid[gridHover.country][gridHover.year];
+        const evs = [...new Map(cell.evs.map(e => [e.name, e])).values()];
+        const left = Math.min(gridHover.x + 14,
+          (typeof window !== 'undefined' ? window.innerWidth : 1200) - 260);
+        const top = Math.min(gridHover.y + 14,
+          (typeof window !== 'undefined' ? window.innerHeight : 800) - 180);
+        return (
+          <div style={{
+            position: 'fixed', left, top,
+            background: T.tooltipBg, border: '1px solid ' + T.tooltipBorder,
+            borderRadius: 4, padding: '10px 12px', pointerEvents: 'none',
+            minWidth: 220, maxWidth: 260,
+            boxShadow: '0 6px 24px rgba(0,0,0,.35)', zIndex: 9999,
+          }}>
+            <div className="cv-mono" style={{
+              fontSize: 8.5, letterSpacing: '.22em',
+              color: regions[countryRegion[gridHover.country]].color, marginBottom: 4,
+            }}>
+              {gridHover.country.toUpperCase()} · {gridHover.year}
+            </div>
+            <Row T={T} mark="●" label="Events active" value={evs.length}/>
+            <Row T={T} mark="○" label="Categories" value={
+              `${cell.hasAC ? 'AC' : ''}${cell.hasAC && cell.hasPV ? ' + ' : ''}${cell.hasPV ? 'PV' : ''}`
+            }/>
+            <div className="cv-mono" style={{ fontSize: 9, color: T.mute, marginTop: 6 }}>
+              click for original death and displaced figures
+            </div>
+            <div className="cv-serif" style={{
+              fontSize: 12.5, color: T.text, marginTop: 4, lineHeight: 1.3,
+            }}>
+              {evs.slice(0, 2).map(e => e.name).join(' · ')}
+              {evs.length > 2 ? ` +${evs.length - 2}` : ''}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* DETAIL CARD */}
+      <div style={{ padding: isPhone ? '0 18px 32px' : '0 48px 40px' }}>
+        <div style={{
+          background: T.panel, border: '1px solid ' + T.panelBorder,
+          borderRadius: 6, padding: isPhone ? '14px 16px' : '20px 24px', minHeight: 160,
+        }}>
+
+          {detailMode === 'event' && (() => {
+            const e = selectedEvent;
+            const span = e.end - e.start + 1;
+            const inScrub = e.start <= scrubYear && e.end >= scrubYear;
+            return (
+              <div>
+                <div className="cv-mono" style={{
+                  fontSize: 9, letterSpacing: '.25em',
+                  color: regions[e.region].color, marginBottom: 8,
+                }}>
+                  EVENT · {e.cat === 'PV' ? 'POLITICAL VIOLENCE' : 'ARMED CONFLICT'} · {e.region.toUpperCase()}
+                </div>
+                <div className="cv-serif" style={{
+                  fontSize: isPhone ? 22 : 30, color: T.headline, fontWeight: 500,
+                  marginBottom: 4, lineHeight: 1.15,
+                }}>{e.name}</div>
+                <div className="cv-mono" style={{ fontSize: 10, color: T.mute, marginBottom: 14 }}>
+                  {e.start === e.end ? e.start : `${e.start} to ${e.end}`} ({span} year{span > 1 ? 's' : ''}) · {e.countries.join(', ')}
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isPhone ? '1fr 1fr' : 'repeat(2, auto)',
+                  gap: isPhone ? 14 : 56, marginBottom: 16,
+                }}>
+                  <Stat T={T} isPhone={isPhone}
+                    label="● TOTAL KILLED (FULL EVENT)"
+                    value={e.deaths}
+                    sub={`over ${span} year${span > 1 ? 's' : ''}`}
+                    color={T.accent}/>
+                  <Stat T={T} isPhone={isPhone}
+                    label="○ TOTAL DISPLACED (FULL EVENT)"
+                    value={e.displaced || '—'}
+                    sub={e.displaced ? `over ${span} year${span > 1 ? 's' : ''}` : 'no estimate'}/>
+                </div>
+                <div className="cv-serif" style={{
+                  fontSize: isPhone ? 14.5 : 15.5, lineHeight: 1.6, color: T.text, maxWidth: 920,
+                }}>
+                  {renderBold(e.note, e.name)}
+                  {e.cites && e.cites.length > 0 && <Cite ids={e.cites}/>}
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+                  <button onClick={() => setSelectedEvent(null)} className="cv-mono" style={{
+                    background: 'transparent', color: T.mute,
+                    border: '1px solid ' + T.rule, padding: '5px 12px',
+                    fontSize: 9, letterSpacing: '.2em', borderRadius: 99, cursor: 'pointer',
+                  }}>✕ CLOSE</button>
+                  {!inScrub && (
+                    <button onClick={() => setScrubYear(e.start)} className="cv-mono" style={{
+                      background: 'transparent', color: T.accent,
+                      border: '1px solid ' + T.accent, padding: '5px 12px',
+                      fontSize: 9, letterSpacing: '.2em', borderRadius: 99, cursor: 'pointer',
+                    }}>JUMP TO {e.start}</button>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+
+          {detailMode === 'cell' && (() => {
+            const { country, year } = selectedCell;
+            const cell = grid[country] && grid[country][year];
+            if (!cell || cell.evs.length === 0) { setSelectedCell(null); return null; }
+            const evs = [...new Map(cell.evs.map(e => [e.name, e])).values()];
+            return (
+              <div>
+                <div className="cv-mono" style={{
+                  fontSize: 9, letterSpacing: '.25em',
+                  color: regions[countryRegion[country]].color, marginBottom: 8,
+                }}>
+                  {country.toUpperCase()} · {year} · {evs.length} EVENT{evs.length === 1 ? '' : 'S'}
+                </div>
+                <div style={{
+                  display: 'flex', gap: isPhone ? 18 : 40, marginBottom: 18, flexWrap: 'wrap',
+                }}>
+                  <Stat T={T} isPhone={isPhone}
+                    label={`EVENTS IN ${year}`}
+                    value={evs.length} sub={`covering ${country}`} color={T.accent}/>
+                  <Stat T={T} isPhone={isPhone}
+                    label="CATEGORIES"
+                    value={`${cell.hasAC ? 'AC' : ''}${cell.hasAC && cell.hasPV ? ' + ' : ''}${cell.hasPV ? 'PV' : ''}`}
+                    sub="AC = armed conflict, PV = political violence"/>
+                </div>
+                <div className="cv-mono" style={{
+                  fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 10,
+                }}>EVENTS ACTIVE · CLICK FOR FULL DESCRIPTION</div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: isPhone ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: 10,
+                }}>
+                  {evs.map(e => (
+                    <button key={e.name}
+                      onClick={() => { setSelectedEvent(e); setSelectedCell(null); }}
+                      style={{
+                        textAlign: 'left', background: T.panelAlt,
+                        border: '1px solid ' + T.rule, borderRadius: 4,
+                        padding: '10px 12px', cursor: 'pointer',
+                        fontFamily: 'inherit', color: 'inherit',
+                      }}>
+                      <div className="cv-mono" style={{
+                        fontSize: 8.5, letterSpacing: '.22em',
+                        color: regions[e.region].color, marginBottom: 4,
+                      }}>
+                        {e.cat === 'PV' ? 'POLITICAL VIOL.' : 'ARMED CONFLICT'}
+                      </div>
+                      <div className="cv-serif" style={{
+                        fontSize: 16, color: T.text, lineHeight: 1.2, marginBottom: 4,
+                      }}>{e.name}</div>
+                      <div className="cv-mono" style={{ fontSize: 9.5, color: T.mute }}>
+                        {e.start === e.end ? e.start : `${e.start} to ${e.end}`} · {e.deaths} killed · {e.displaced ? e.displaced + ' displaced' : 'no displacement data'}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setSelectedCell(null)} className="cv-mono" style={{
+                  marginTop: 14, background: 'transparent', color: T.mute,
+                  border: '1px solid ' + T.rule, padding: '5px 12px',
+                  fontSize: 9, letterSpacing: '.2em', borderRadius: 99, cursor: 'pointer',
+                }}>✕ CLOSE</button>
+              </div>
+            );
+          })()}
+
+          {detailMode === 'year' && (
+            <div>
+              <div className="cv-mono" style={{
+                fontSize: 9, letterSpacing: '.25em', color: T.accent, marginBottom: 8,
+              }}>
+                CONCURRENT IN {scrubYear} · {activeInYear.length} EVENT{activeInYear.length === 1 ? '' : 'S'} · CLICK ANY TO OPEN
+              </div>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: isPhone ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 10,
+              }}>
+                {activeInYear.map(e => (
+                  <button key={e.name} onClick={() => setSelectedEvent(e)} style={{
+                    textAlign: 'left', background: T.panelAlt,
+                    border: '1px solid ' + T.rule, borderRadius: 4,
+                    padding: '10px 12px', cursor: 'pointer',
+                    fontFamily: 'inherit', color: 'inherit',
+                  }}>
+                    <div className="cv-mono" style={{
+                      fontSize: 8.5, letterSpacing: '.22em',
+                      color: regions[e.region].color, marginBottom: 4,
+                    }}>
+                      {e.cat === 'PV' ? 'POLITICAL VIOL.' : 'ARMED CONFLICT'} · {e.region.toUpperCase()}
+                    </div>
+                    <div className="cv-serif" style={{
+                      fontSize: 16, color: T.text, lineHeight: 1.2, marginBottom: 4,
+                    }}>{e.name}</div>
+                    <div className="cv-mono" style={{ fontSize: 9.5, color: T.mute }}>
+                      {e.start === e.end ? e.start : `${e.start} to ${e.end}`} · {e.deaths} killed · {e.countries.join(', ')}
+                    </div>
+                  </button>
+                ))}
+                {activeInYear.length === 0 && (
+                  <div className="cv-serif" style={{ fontStyle: 'italic', color: T.faint }}>
+                    No active events in {scrubYear} with current filters.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* REFERENCES (mirrors the essay so inline Cite scrolls work) */}
+      <section style={{
+        padding: isPhone ? '0 18px 60px' : '0 48px 80px',
+        maxWidth: 1100, margin: '0 auto',
+      }}>
+        <div className="cv-mono" style={{
+          fontSize: 10, letterSpacing: '.3em', color: T.accent, marginBottom: 12,
+        }}>REFERENCES</div>
+        <h2 className="cv-serif" style={{
+          fontSize: isPhone ? 22 : 28, fontWeight: 500, color: T.headline,
+          margin: '0 0 18px', lineHeight: 1.1,
+        }}>Citation Reference List</h2>
+        {(() => {
+          const REF_SECTIONS = [
+            { startAt: 1,  label: "Datasets and institutional sources" },
+            { startAt: 10, label: "Books and articles cited in the event catalogue" },
+            { startAt: 20, label: "Event-specific reports and investigations" },
+            { startAt: 45, label: "Scholarship cited in the analytical sections" },
+            { startAt: 60, label: "Politicide, repression, and state-failure datasets" },
+            { startAt: 63, label: "Heritage Month institutional history" },
+          ];
+          return (
+            <ol style={{
+              fontFamily: "'DM Sans', system-ui, sans-serif",
+              fontSize: 13, lineHeight: 1.55, color: T.mute,
+              padding: 0, margin: 0,
+            }}>
+              {CITATIONS.map(c => {
+                const section = REF_SECTIONS.find(s => s.startAt === c.n);
+                return (
+                  <React.Fragment key={c.n}>
+                    {section && (
+                      <li className="cv-mono" style={{
+                        fontSize: 10, letterSpacing: '.25em',
+                        marginTop: 24, marginBottom: 8,
+                        color: T.accent, listStyle: 'none', padding: '0 8px',
+                      }}>
+                        {section.label.toUpperCase()}
+                      </li>
+                    )}
+                    <li id={'ref-' + c.n} style={{
+                      display: 'flex', gap: 12, padding: '6px 8px',
+                      borderBottom: '1px solid ' + T.emptyCell,
+                      scrollMarginTop: '2rem',
+                    }}>
+                      <span className="cv-mono" style={{
+                        color: T.accent, minWidth: 28, flexShrink: 0,
+                      }}>{c.n}.</span>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        {c.text}{' '}
+                        <a href={c.url} target="_blank" rel="noopener noreferrer" style={{
+                          color: T.accent, textDecoration: 'underline', wordBreak: 'break-all',
+                        }}>{c.url.replace(/^https?:\/\//, '')}</a>
+                      </span>
+                    </li>
+                  </React.Fragment>
+                );
+              })}
+            </ol>
+          );
+        })()}
+      </section>
+    </div>
+  );
+}
+
+// ============================================================
+// Subcomponents
+// ============================================================
+
+function YearHistogram({ T, years, yearRange, yearTotals, selectedYear, onSelect, isPhone }) {
+  const [hoverYear, setHoverYear] = useState(null);
+  const valFor = (y) => yearTotals[y] || 0;
+  const maxV = Math.max(1, ...years.map(valFor));
+  const inRange = (y) => y >= yearRange[0] && y <= yearRange[1];
+  const heightFor = (v) => v <= 0 ? 0 : (v / maxV) * 100;
+  const barH = isPhone ? 90 : 130;
+  const showHover = hoverYear != null ? hoverYear : selectedYear;
+  const hoverV = valFor(showHover);
+
+  return (
+    <div>
+      <div style={{
+        display: 'flex', alignItems: 'flex-end', gap: 1,
+        height: barH, position: 'relative',
+      }}>
+        {years.map(y => {
+          const v = valFor(y);
+          const h = heightFor(v);
+          const within = inRange(y);
+          const sel = y === selectedYear;
+          const hov = y === hoverYear;
+          return (
+            <button key={y}
+              onClick={() => onSelect(y)}
+              onMouseEnter={() => setHoverYear(y)}
+              onMouseLeave={() => setHoverYear(null)}
+              aria-label={`${y}: ${v} events`}
+              style={{
+                flex: 1, height: '100%',
+                background: 'transparent', border: 'none', padding: 0,
+                display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+                cursor: v > 0 ? 'pointer' : 'default',
+                opacity: within ? 1 : 0.25,
+              }}>
+              <div style={{
+                width: '100%', height: `${h}%`,
+                background: sel ? T.text : (hov ? T.accent : T.accent + 'aa'),
+                borderTop: sel ? `2px solid ${T.accent}` : 'none',
+                transition: 'background .12s ease',
+              }}/>
+            </button>
+          );
+        })}
+        <div style={{
+          position: 'absolute', top: 0, bottom: 0,
+          left: `${((selectedYear - years[0]) / (years.length - 1)) * 100}%`,
+          transform: 'translateX(-50%)',
+          width: 1, background: T.text, opacity: 0.5, pointerEvents: 'none',
+        }}/>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }} className="cv-mono">
+        {[1945, 1960, 1975, 1990, 2005, 2020].map(y => (
+          <span key={y} style={{
+            fontSize: 9,
+            color: y === selectedYear ? T.text : T.faint,
+            fontVariantNumeric: 'tabular-nums',
+          }}>{y}</span>
+        ))}
+      </div>
+      <div style={{
+        marginTop: 10, display: 'flex', alignItems: 'baseline',
+        gap: 14, flexWrap: 'wrap',
+      }}>
+        <div className="cv-serif" style={{
+          fontSize: isPhone ? 24 : 30, fontWeight: 500, color: T.text,
+          fontVariantNumeric: 'tabular-nums', minWidth: 80,
+        }}>{showHover}</div>
+        <div className="cv-mono" style={{ fontSize: 10, color: T.faint, letterSpacing: '.18em' }}>
+          EVENTS ACTIVE
+        </div>
+        <div className="cv-serif" style={{
+          fontSize: isPhone ? 18 : 22, fontWeight: 500, color: T.accent,
+          fontVariantNumeric: 'tabular-nums',
+        }}>{hoverV}</div>
+        {hoverYear != null && hoverYear !== selectedYear && (
+          <span className="cv-mono" style={{
+            fontSize: 9, color: T.faint, letterSpacing: '.15em',
+          }}>· CLICK BAR TO LOCK</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FilterGroup({ label, T, children }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 }}>
+      <span className="cv-mono" style={{
+        fontSize: 9, letterSpacing: '.22em', color: T.faint,
+      }}>{label}</span>
+      <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function StatsColumn({ T, isPhone, heading, subheading, items, tone }) {
+  const bg = tone === 'alt' ? T.panelAlt : 'transparent';
+  return (
+    <div style={{
+      background: bg, border: '1px solid ' + T.rule, borderRadius: 4,
+      padding: isPhone ? '12px 14px' : '14px 18px',
+    }}>
+      <div className="cv-mono" style={{
+        fontSize: 10, letterSpacing: '.22em', color: T.text, marginBottom: 2,
+      }}>{heading}</div>
+      <div className="cv-mono" style={{
+        fontSize: 9, color: T.faint, marginBottom: 14, letterSpacing: '.04em',
+      }}>{subheading}</div>
+      <div style={{ display: 'flex', gap: isPhone ? 16 : 28, flexWrap: 'wrap', alignItems: 'baseline' }}>
+        {items.map(it => (
+          <div key={it.label} style={{ minWidth: it.big ? 130 : 80 }}>
+            <div className="cv-serif" style={{
+              fontSize: it.big ? (isPhone ? 24 : 30) : (isPhone ? 18 : 22),
+              fontWeight: 500, lineHeight: 1,
+              color: it.color || T.text, fontVariantNumeric: 'tabular-nums',
+            }}>{it.value}</div>
+            <div className="cv-mono" style={{
+              fontSize: 9, color: T.mute, marginTop: 4, letterSpacing: '.04em',
+            }}>{it.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Stat({ T, isPhone, label, value, sub, color }) {
+  return (
+    <div style={{ minWidth: 130 }}>
+      <div className="cv-mono" style={{
+        fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 4,
+      }}>{label}</div>
+      <div className="cv-serif" style={{
+        fontSize: isPhone ? 24 : 32, fontWeight: 500, lineHeight: 1,
+        color: color || T.text, fontVariantNumeric: 'tabular-nums',
+      }}>{value}</div>
+      {sub && <div className="cv-mono" style={{
+        fontSize: 9.5, color: T.mute, marginTop: 4,
+      }}>{sub}</div>}
+    </div>
+  );
+}
+
+function Row({ T, mark, label, value }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+      <span className="cv-mono" style={{ fontSize: 9.5, color: T.mute }}>{mark} {label}</span>
+      <span className="cv-mono" style={{
+        fontSize: 11, color: T.text, fontVariantNumeric: 'tabular-nums',
+      }}>{value}</span>
+    </div>
+  );
+}
+
+function pill(active, color, phone, theme) {
+  return {
+    background: active ? color : 'transparent',
+    color: active ? (theme === 'dark' ? '#0e1118' : '#ffffff') : color,
+    border: '1px solid ' + color,
+    padding: phone ? '4px 8px' : '4px 10px',
+    fontSize: phone ? 9 : 9.5,
+    letterSpacing: '.18em',
+    cursor: 'pointer',
+    borderRadius: 99,
+    whiteSpace: 'nowrap',
+    fontFamily: "'JetBrains Mono', monospace",
+  };
+}
+
+function LegendSwatch({ T, color, darker, hatch, empty, label, mono }) {
+  const bg = empty ? 'transparent' : (darker && color ? mix(color, '#000', 0.25) : color);
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+      <div style={{
+        width: 18, height: 14, borderRadius: 2, flexShrink: 0,
+        background: bg,
+        border: empty ? '1px solid ' + T.emptyCell : 'none',
+        position: 'relative', overflow: 'hidden',
+      }}>
+        {hatch && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: `repeating-linear-gradient(45deg, ${T.hatchInk} 0 1.5px, transparent 1.5px 4px)`,
+          }}/>
+        )}
+      </div>
+      <span className={mono ? 'cv-mono' : ''} style={{
+        fontSize: 10, letterSpacing: mono ? '.15em' : 0, color: T.mute,
+      }}>{label}</span>
+    </div>
+  );
+}

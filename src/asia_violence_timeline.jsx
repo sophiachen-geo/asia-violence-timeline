@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 const START_YEAR = 1945;
 const END_YEAR = 2026;
 
-const REGIONS = {
+export const REGIONS = {
   "East Asia":      { color: "#c4615d", soft: "rgba(196,97,93,0.16)",  ring: "rgba(196,97,93,0.45)" },
   "Southeast Asia": { color: "#5a8a85", soft: "rgba(90,138,133,0.16)", ring: "rgba(90,138,133,0.45)" },
   "South Asia":     { color: "#c69449", soft: "rgba(198,148,73,0.16)", ring: "rgba(198,148,73,0.45)" },
@@ -11,7 +11,7 @@ const REGIONS = {
   "West Asia":      { color: "#b97a55", soft: "rgba(185,122,85,0.16)", ring: "rgba(185,122,85,0.45)" },
 };
 
-const CITATIONS = [
+export const CITATIONS = [
   { n: 1,  text: "Uppsala Conflict Data Program (UCDP), Uppsala University.", url: "https://ucdp.uu.se" },
   { n: 2,  text: "Peace Research Institute Oslo (PRIO), Battle Deaths Dataset.", url: "https://www.prio.org/data" },
   { n: 3,  text: "Armed Conflict Location and Event Data Project (ACLED).", url: "https://acleddata.com" },
@@ -79,7 +79,7 @@ const CITATIONS = [
   { n: 65, text: "Senate of Canada, on the Honourable Vivienne Poy and the 2001 motion designating May as Asian Heritage Month.", url: "https://sencanada.ca/en/sencaplus/news/seven-senators-pay-tribute-to-inspirational-asian-canadians/" },
 ];
 
-const COUNTRY_REGION = {
+export const COUNTRY_REGION = {
   "China": "East Asia",
   "Taiwan": "East Asia",
   "North Korea": "East Asia",
@@ -122,7 +122,7 @@ const COUNTRY_REGION = {
   "Azerbaijan": "West Asia"
 };
 
-const EVENTS = [
+export const EVENTS = [
   { name: "Chinese Civil War (Resumed)", countries: ["China"], region: "East Asia", category: "Armed Conflict", start: 1946, end: 1949, deaths: "2 to 6 M", displaced: "~5 M",
     note: "When the Marshall Mission collapsed in early 1946, the uneasy wartime truce between the **Chinese Communist Party** and the **Kuomintang** dissolved into a continental war that the Communists ultimately won by exploiting agrarian grievance, KMT mismanagement of the Manchurian recovery, and decisive operational coordination during the Liaoshen, Huaihai, and Pingjin campaigns of 1948 and 1949. PRIO's mid-range battle-death estimate is roughly two million, and a wider casualty count that includes famine, one-sided violence, and the cumulative effects of disrupted agriculture climbs toward six million. Mao Zedong proclaimed the People's Republic on 1 October 1949, and Chiang Kai-shek's remaining forces retreated to Taiwan along with roughly two million civilians and most of the Imperial collections from the Palace Museum. The outcome structured the Cold War in East Asia, locked in the unresolved Taiwan question that continues to shape regional security, and gave the Chinese Communist Party the unchallenged authority over which the coming campaigns of mass political violence would be built.",
     cites: [1, 2, 5] },
@@ -554,7 +554,7 @@ function scrollToRef(n) {
   };
 }
 
-function Cite({ ids }) {
+export function Cite({ ids }) {
   return (
     <sup style={{ fontSize: '0.7em', whiteSpace: 'nowrap', marginLeft: '1px' }}>
       {ids.map((n, i) => (
@@ -1134,8 +1134,19 @@ export default function AsiaViolenceTimeline() {
       <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-12 relative">
         {/* HEADER */}
         <header className="mb-8 sm:mb-12">
-          <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: '#b8956a' }}>
-            ASIA · 1945 TO 2026 · CONFLICT AND STATE VIOLENCE
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div className="mono text-[10px] tracking-[0.3em]" style={{ color: '#b8956a' }}>
+              ASIA · 1945 TO 2026 · CONFLICT AND STATE VIOLENCE
+            </div>
+            <a href="?view=convergence" className="mono text-[10px] tracking-[0.2em] px-3 py-1.5 rounded-full"
+              style={{
+                color: '#b8956a',
+                border: '1px solid rgba(184,149,106,0.45)',
+                textDecoration: 'none',
+                backgroundColor: 'rgba(184,149,106,0.06)',
+              }}>
+              TRY CONVERGENCE VIEW →
+            </a>
           </div>
           <h1 className="serif font-medium mb-3" style={{ color: '#f1ead9', fontSize: 'clamp(34px, 6vw, 52px)', lineHeight: 0.95 }}>
             After <span style={{ fontStyle: 'italic', color: '#b8956a' }}>Empire</span>
