@@ -115,6 +115,94 @@ const CURRENT_YEAR = new Date().getFullYear();
 const REGION_ORDER = ["West Asia", "Central Asia", "South Asia", "Southeast Asia", "East Asia"];
 
 // ============================================================
+// ASIA LANDMASS — coarse hand-traced silhouette in lon/lat space.
+// Not a real basemap. Vertex count is deliberately low so the map
+// reads as a stylized cartographic gesture rather than an atlas
+// illustration. Continental mainland is one closed loop; major
+// archipelagos and offshore islands render as separate simplified
+// shapes below. Adjust freely.
+// ============================================================
+
+const ASIA_MAINLAND = [
+  // West edge — Anatolia / Levant / Sinai
+  [28, 41], [32, 41], [36, 37], [36, 33], [35, 31], [32, 29], [34, 27],
+  // Arabian Peninsula
+  [38, 21], [42, 16], [44, 13], [48, 14], [52, 16], [55, 17],
+  [57, 22], [60, 25],
+  // Gulf coast / Iran south / Pakistan
+  [54, 24], [50, 27], [49, 30], [56, 26], [62, 25], [67, 25],
+  // India west coast / southern tip
+  [70, 23], [73, 19], [75, 14], [77, 8], [78, 8],
+  // India east coast / Bay of Bengal
+  [80, 11], [82, 16], [86, 20], [89, 22],
+  // Myanmar / Andaman coast
+  [93, 19], [94, 16], [97, 15],
+  // Malay Peninsula
+  [98, 9], [100, 5], [103, 1],
+  // Indochina east coast
+  [105, 10], [109, 11], [109, 15], [108, 18], [107, 21],
+  // South China coast
+  [110, 21], [114, 22], [117, 23], [120, 24], [121, 28], [122, 32], [122, 37],
+  // Korean Peninsula
+  [125, 39], [128, 38], [129, 35], [130, 36], [129, 39], [131, 42],
+  // Russian Far East / Sea of Okhotsk
+  [134, 47], [138, 52], [142, 55], [148, 60], [156, 62],
+  // Top edge — Siberian coast, truncated near lat 64 (map's max)
+  [155, 64], [120, 64], [80, 64], [55, 60],
+  // Caspian / Caucasus return
+  [50, 50], [50, 45], [48, 42], [44, 41], [40, 43], [37, 42], [32, 42],
+];
+
+// Islands and archipelagos — each is its own simplified loop in lon/lat.
+// These are gesture-level outlines, not real coastlines.
+const ASIA_ISLANDS = [
+  // Japan — three-blob chain
+  [[131, 32], [134, 33], [137, 34], [140, 36], [142, 40], [141, 43],
+   [144, 44], [142, 41], [139, 38], [136, 35], [133, 34], [131, 32]],
+  // Taiwan
+  [[120.5, 22], [121.5, 22.2], [122, 24], [121.5, 25.3], [120.6, 24.5], [120.5, 22]],
+  // Sri Lanka
+  [[79.8, 6], [81.8, 6.5], [82, 9], [80, 10], [79.5, 8], [79.8, 6]],
+  // Sumatra
+  [[95, 5.5], [100, 1], [105, -4], [106, -6], [102, -5], [98, -1], [95, 5.5]],
+  // Java
+  [[105, -6], [110, -7], [114, -8], [113, -8.5], [108, -8], [105, -6]],
+  // Borneo (Kalimantan / Sabah / Sarawak)
+  [[109, 2], [112, -1], [115, -4], [117, -4], [118, 0], [117, 4], [114, 5], [111, 4], [109, 2]],
+  // Sulawesi (rough cross shape simplified to lozenge)
+  [[119, -5], [121, -3], [123, 0], [125, 1], [124, -2], [122, -4], [119, -5]],
+  // Luzon (Philippines main island)
+  [[120, 14], [121, 18.5], [122, 18], [124, 16], [122, 13], [120, 14]],
+  // Mindanao (Philippines south)
+  [[122, 6], [125, 6], [126, 8], [125, 9.5], [123, 9], [122, 6]],
+  // New Guinea (Indonesian half + PNG; western half is Asian per UN scheme)
+  [[131, -1], [136, -2], [141, -3], [141, -6], [137, -7], [133, -5], [131, -1]],
+];
+
+// Countries to label on the silhouette. Subset chosen for legibility:
+// they're large enough or politically prominent enough that a label
+// helps readers orient. Smaller territories rely on event symbols.
+const LABEL_COUNTRIES = [
+  'China', 'India', 'Pakistan', 'Iran', 'Saudi Arabia', 'Russia',
+  'Indonesia', 'Vietnam', 'Thailand', 'Myanmar', 'Japan',
+  'North Korea', 'South Korea', 'Afghanistan', 'Iraq', 'Syria',
+  'Bangladesh', 'Philippines', 'Mongolia', 'Kazakhstan',
+];
+
+// Approximate label anchors. We use these instead of COUNTRY_COORDS for
+// countries that are not in the catalogue (e.g. Russia, Saudi Arabia,
+// Kazakhstan) so the map still reads as Asia.
+const LABEL_COORDS = {
+  'Russia':       { lon: 90,  lat: 60   },
+  'Saudi Arabia': { lon: 45,  lat: 24   },
+  'Iran':         { lon: 53,  lat: 32   },
+  'Iraq':         { lon: 44,  lat: 33   },
+  'Syria':        { lon: 38,  lat: 35   },
+  'Kazakhstan':   { lon: 67,  lat: 48   },
+  'Mongolia':     { lon: 103, lat: 47   },
+};
+
+// ============================================================
 // Main component
 // ============================================================
 
@@ -487,9 +575,17 @@ export default function Convergence() {
           animation: cv-blink-ring 0.9s ease-out 2;
           pointer-events: none;
         }
+        @keyframes cv-arc-flow {
+          to { stroke-dashoffset: -36; }
+        }
+        .cv-arc {
+          stroke-dashoffset: 0;
+          animation: cv-arc-flow 2.4s linear infinite;
+          pointer-events: none;
+        }
         @media (prefers-reduced-motion: reduce) {
           .cv-sym, .cv-cell { transition: none !important; }
-          .cv-blink-ring { animation: none !important; }
+          .cv-blink-ring, .cv-arc { animation: none !important; }
         }
       `}</style>
 
@@ -784,18 +880,99 @@ export default function Convergence() {
             width: '100%', height: 'auto', display: 'block', maxWidth: '100%',
           }}>
             {/* Graticule */}
-            <g opacity={theme === 'dark' ? 0.18 : 0.12}>
-              {[40, 60, 80, 100, 120, 140].map(lon => {
-                const [x] = project(lon, 0);
-                return <line key={`v${lon}`} x1={x} y1={0} x2={x} y2={mapH}
-                  stroke={T.text} strokeWidth=".4" strokeDasharray="2 4"/>;
-              })}
-              {[0, 20, 40].map(lat => {
-                const [, y] = project(0, lat);
-                return <line key={`h${lat}`} x1={0} y1={y} x2={mapW} y2={y}
-                  stroke={T.text} strokeWidth=".4" strokeDasharray="2 4"/>;
-              })}
+            {/* Landmass silhouette — coarse hand-traced gesture, not a basemap. */}
+            <g>
+              <path
+                d={ASIA_MAINLAND
+                  .map(([lon, lat], i) => {
+                    const [x, y] = project(lon, lat);
+                    return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+                  })
+                  .join(' ') + ' Z'}
+                fill={T.text}
+                fillOpacity={theme === 'dark' ? 0.05 : 0.07}
+                stroke={T.text}
+                strokeOpacity={theme === 'dark' ? 0.18 : 0.22}
+                strokeWidth="0.6"
+                strokeLinejoin="round"
+              />
+              {ASIA_ISLANDS.map((loop, idx) => (
+                <path key={`isl-${idx}`}
+                  d={loop
+                    .map(([lon, lat], i) => {
+                      const [x, y] = project(lon, lat);
+                      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
+                    })
+                    .join(' ') + ' Z'}
+                  fill={T.text}
+                  fillOpacity={theme === 'dark' ? 0.05 : 0.07}
+                  stroke={T.text}
+                  strokeOpacity={theme === 'dark' ? 0.18 : 0.22}
+                  strokeWidth="0.5"
+                  strokeLinejoin="round"
+                />
+              ))}
             </g>
+
+            {/* Country labels — anchored at centroids, drawn beneath symbols. */}
+            {!isPhone && LABEL_COUNTRIES.map(c => {
+              const coord = LABEL_COORDS[c] || COUNTRY_COORDS[c];
+              if (!coord) return null;
+              const [x, y] = project(coord.lon, coord.lat);
+              return (
+                <text key={`lbl-${c}`} x={x} y={y}
+                  fontSize="8.5" fill={T.text} opacity="0.42"
+                  fontFamily="'DM Sans', sans-serif"
+                  textAnchor="middle"
+                  style={{ pointerEvents: 'none' }}>
+                  {c}
+                </text>
+              );
+            })}
+
+            {/* Counter-mapping arcs — for hovered/selected events that span
+                2+ countries, connect each pair with a curved bezier. Stroke
+                pulses (CSS) so the arc feels like an active linkage rather
+                than a neutral geographic line. */}
+            {(() => {
+              const focus = selectedEvent || (mapHover && mapHover.event);
+              if (!focus) return null;
+              const pts = focus.countries
+                .filter(c => COUNTRY_COORDS[c])
+                .map(c => ({ c, p: project(COUNTRY_COORDS[c].lon, COUNTRY_COORDS[c].lat) }));
+              if (pts.length < 2) return null;
+              const col = regions[focus.region].color;
+              const arcs = [];
+              for (let i = 0; i < pts.length; i++) {
+                for (let j = i + 1; j < pts.length; j++) {
+                  const [x1, y1] = pts[i].p;
+                  const [x2, y2] = pts[j].p;
+                  const mx = (x1 + x2) / 2;
+                  const my = (y1 + y2) / 2;
+                  const dx = x2 - x1;
+                  const dy = y2 - y1;
+                  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+                  // Push the control point perpendicular to the chord so
+                  // the arc lifts away from the straight line, harder for
+                  // shorter chords (so very-close countries don't get a
+                  // flat link).
+                  const lift = Math.min(80, 12 + len * 0.28);
+                  const cx = mx + (-dy / len) * lift;
+                  const cy = my + (dx / len) * lift;
+                  arcs.push(
+                    <path key={`arc-${pts[i].c}-${pts[j].c}`}
+                      d={`M${x1},${y1} Q${cx},${cy} ${x2},${y2}`}
+                      fill="none" stroke={col}
+                      strokeWidth="1.4" strokeOpacity="0.85"
+                      strokeDasharray="4 5"
+                      strokeLinecap="round"
+                      className="cv-arc"
+                    />
+                  );
+                }
+              }
+              return <g>{arcs}</g>;
+            })()}
 
             {/* Symbols for active-in-year events */}
             {activeInYear.flatMap(e => e.countries.map(c => {
@@ -841,21 +1018,29 @@ export default function Convergence() {
               );
             }))}
 
-            {/* Region labels */}
-            {!isPhone && [
-              ["West Asia", 44, 36],
-              ["Central Asia", 67, 48],
-              ["South Asia", 78, 17],
-              ["Southeast Asia", 108, 3],
-              ["East Asia", 118, 44],
-            ].map(([name, lon, lat]) => {
-              const [x, y] = project(lon, lat);
-              return <text key={name} x={x} y={y} fontSize="9"
-                fill={regions[name].color} opacity=".55"
-                fontFamily="'JetBrains Mono'" letterSpacing="1.5"
-                textAnchor="middle">{name.toUpperCase()}</text>;
-            })}
           </svg>
+
+          {/* Attribution note on what casualty figures represent. Kept tight
+              and immediately under the map so it never sits far from the
+              symbols whose meaning it qualifies. */}
+          <div className="cv-mono" style={{
+            fontSize: 9.5, lineHeight: 1.55, color: T.faint, marginTop: 12,
+            paddingTop: 10, borderTop: '1px solid ' + T.rule,
+            letterSpacing: '.02em',
+          }}>
+            <span style={{ color: T.accent, letterSpacing: '.22em', marginRight: 6 }}>
+              NOTE ·
+            </span>
+            <span style={{ color: T.mute }}>
+              Death and displacement figures shown on each marker are the
+              event's full total, drawn from the cited primary sources, and
+              are repeated on every country involved &mdash; not a
+              per-country share. Where an event spans two or more states,
+              the linking arc visible on hover marks the parties named in
+              the catalogue. National-level splits would require additional
+              sourcing and are not yet implemented in the dataset.
+            </span>
+          </div>
 
           {/* MAP TOOLTIP */}
           {mapHover && (
