@@ -56,6 +56,27 @@ const CITATIONS = [
   { n: 42, text: "Crawford, Neta, The Human Toll of the Gaza War (Costs of War, October 2025).", url: "https://costsofwar.watson.brown.edu/paper/HumanTollGaza" },
   { n: 43, text: "Maurice Meisner, Mao's China and After (Free Press, 1999); Philip Short, Mao: A Life (Henry Holt, 1999).", url: "https://en.wikipedia.org/wiki/Mao%27s_China_and_After" },
   { n: 44, text: "Sarmila Bose, Dead Reckoning (Hurst, 2011).", url: "https://en.wikipedia.org/wiki/Sarmila_Bose" },
+  { n: 45, text: "Odd Arne Westad, The Global Cold War: Third World Interventions and the Making of Our Times (Cambridge University Press, 2005).", url: "https://www.cambridge.org/core/books/global-cold-war/8C26ADB4D4DB72EFE9F9FE08B3C56E96" },
+  { n: 46, text: "Frederick Cooper, Citizenship between Empire and Nation: Remaking France and French Africa, 1945 to 1960 (Princeton University Press, 2014).", url: "https://press.princeton.edu/books/paperback/9780691161310/citizenship-between-empire-and-nation" },
+  { n: 47, text: "Bethany Lacina and Nils Petter Gleditsch, Monitoring Trends in Global Combat: A New Dataset of Battle Deaths, European Journal of Population 21, no. 2-3 (2005): 145-166.", url: "https://link.springer.com/article/10.1007/s10680-005-6851-6" },
+  { n: 48, text: "Meredith L. Weiss, The Roots of Resilience: Party Machines and Grassroots Politics in Southeast Asia (Cornell University Press, 2020).", url: "https://www.cornellpress.cornell.edu/book/9781501752278/the-roots-of-resilience/" },
+  { n: 49, text: "Morris Rossabi, Modern Mongolia: From Khans to Commissars to Capitalists (University of California Press, 2005).", url: "https://www.ucpress.edu/books/modern-mongolia/paper" },
+  { n: 50, text: "John W. Dower, Embracing Defeat: Japan in the Wake of World War II (W. W. Norton, 1999).", url: "https://en.wikipedia.org/wiki/Embracing_Defeat" },
+  { n: 51, text: "Chalmers Johnson, MITI and the Japanese Miracle: The Growth of Industrial Policy, 1925 to 1975 (Stanford University Press, 1982).", url: "https://www.sup.org/books/politics/miti-and-japanese-miracle" },
+  { n: 52, text: "Treaty of Mutual Cooperation and Security between the United States and Japan (signed January 19, 1960).", url: "https://en.wikipedia.org/wiki/Treaty_of_Mutual_Cooperation_and_Security_between_the_United_States_and_Japan" },
+  { n: 53, text: "Constitution of Japan, Article 9 (effective May 3, 1947).", url: "https://en.wikipedia.org/wiki/Article_9_of_the_Japanese_Constitution" },
+  { n: 54, text: "Erika Lee, The Making of Asian America: A History (Simon & Schuster, 2015).", url: "https://www.simonandschuster.com/books/The-Making-of-Asian-America/Erika-Lee/9781476739410" },
+  { n: 55, text: "Lisa Lowe, Immigrant Acts: On Asian American Cultural Politics (Duke University Press, 1996).", url: "https://www.dukeupress.edu/immigrant-acts" },
+  { n: 56, text: "Yen Le Espiritu, Body Counts: The Vietnam War and Militarized Refuge(es) (University of California Press, 2014).", url: "https://www.ucpress.edu/books/body-counts/paper" },
+  { n: 57, text: "Christopher Bayly and Tim Harper, Forgotten Wars: Freedom and Revolution in Southeast Asia (Harvard University Press, 2007).", url: "https://www.hup.harvard.edu/books/9780674057081" },
+  { n: 58, text: "Prasenjit Duara, ed., Decolonization: Perspectives from Now and Then (Routledge, 2004).", url: "https://www.routledge.com/Decolonization-Perspectives-from-Now-and-Then/Duara/p/book/9780415248419" },
+  { n: 59, text: "Human Rights Watch, Bhutan's Ethnic Cleansing (February 1, 2008).", url: "https://www.hrw.org/news/2008/02/01/bhutans-ethnic-cleansing" },
+  { n: 60, text: "Barbara Harff, No Lessons Learned from the Holocaust? Assessing Risks of Genocide and Political Mass Murder since 1955, American Political Science Review 97, no. 1 (2003), Genocide/Politicide dataset.", url: "https://www.systemicpeace.org/inscrdata.html" },
+  { n: 61, text: "Mark Gibney and colleagues, the Political Terror Scale.", url: "http://www.politicalterrorscale.org/" },
+  { n: 62, text: "Political Instability Task Force (PITF), State Failure dataset, Center for Systemic Peace.", url: "https://www.systemicpeace.org/inscr/inscr.htm" },
+  { n: 63, text: "Sarah Wildman, How One Woman's Story Led to the Creation of Asian Pacific American Heritage Month, TIME (May 2019), supplemented by the Federal Asian Pacific American Council historical record.", url: "https://time.com/5592591/asian-pacific-heritage-month-history/" },
+  { n: 64, text: "Government of Canada, About Asian Heritage Month.", url: "https://www.canada.ca/en/canadian-heritage/campaigns/asian-heritage-month/about.html" },
+  { n: 65, text: "Senate of Canada, on the Honourable Vivienne Poy and the 2001 motion designating May as Asian Heritage Month.", url: "https://sencanada.ca/en/sencaplus/news/seven-senators-pay-tribute-to-inspirational-asian-canadians/" },
 ];
 
 const COUNTRY_REGION = {
@@ -968,17 +989,17 @@ function ArchetypesDiagram() {
 
 function ImperialCircuitDiagram() {
   const phases = [
-    { label: "PHASE 1 · 1850 to 1945", color: "#c69449", title: "Labour extraction",
-      desc: "Railways, gold rush, plantation, annexation." },
-    { label: "PHASE 2 · 1945 to 2025", color: "#c4615d", title: "Decolonisation wars",
-      desc: "Partition, Indochina, Korea, Vietnam, Iraq." },
-    { label: "PHASE 3 · 1965 to 2026", color: "#5a8a85", title: "Migration windows open",
+    { label: "MECHANISM 1 · 1850 to 1945", color: "#c69449", title: "Imperial labor extraction",
+      desc: "Railways, Gold Rush, plantations, annexation, indenture." },
+    { label: "MECHANISM 2 · 1945 to present", color: "#c4615d", title: "Violent decolonization",
+      desc: "Partition, Indochina, Korea, Vietnam, Palestine, Iraq." },
+    { label: "MECHANISM 3 · 1965 to present", color: "#5a8a85", title: "Refugee production and immigration reform",
       desc: "1965 US Hart-Celler; 1967 Canada points system." },
   ];
   return (
     <div className="my-8">
       <div className="mono text-[10px] tracking-[0.1em] mb-4" style={{ color: 'rgba(232,226,212,0.55)' }}>
-        THE IMPERIAL CIRCUIT · LABOUR EXTRACTION TO DISPLACEMENT TO ARRIVAL
+        THREE MECHANISMS · LABOR EXTRACTION TO DISPLACEMENT TO ARRIVAL
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 mb-6">
         {phases.map((p, i) => (
@@ -1117,16 +1138,34 @@ export default function AsiaViolenceTimeline() {
             ASIA · 1945 TO 2026 · CONFLICT AND STATE VIOLENCE
           </div>
           <h1 className="serif font-medium mb-3" style={{ color: '#f1ead9', fontSize: 'clamp(34px, 6vw, 52px)', lineHeight: 0.95 }}>
-            Eighty Years of Violence,<br/>
-            <span style={{ fontStyle: 'italic', color: '#b8956a' }}>One Continent.</span>
+            After <span style={{ fontStyle: 'italic', color: '#b8956a' }}>Empire</span>
           </h1>
-          <p className="sans text-[13px] sm:text-[14px] leading-relaxed max-w-2xl" style={{ color: 'rgba(232,226,212,0.7)' }}>
-            A combined record of armed conflict and political mass violence across Asia since the end of the
-            Second World War. Solid bars represent interstate wars, civil wars, and sustained insurgencies;
-            patterned bars represent state repression, politicide, genocide, and policy-induced famine.
-            Tap any entry for context, casualty estimates, displacement figures, and citations. The country
-            filter is multi-select, and events that involve multiple countries appear under each one.
+          <p className="serif italic mb-7 max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)', fontSize: 'clamp(17px, 2.4vw, 22px)', lineHeight: 1.3 }}>
+            Asia, Violence, and the Histories Behind Asian Heritage Month (1945&#x2013;2026)
           </p>
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+            <p>
+              Asian Heritage Month is often organized around migration, contribution, resilience, and belonging. This project begins slightly earlier, with the historical conditions that made many migrations necessary in the first place.
+            </p>
+            <p>
+              The timeline starts in 1945 because the end of the Second World War marked a fundamental rupture in modern Asian history.<Cite ids={[45]}/> The collapse of the Japanese Empire, the weakening of European colonial powers, the beginning of the Cold War, the acceleration of decolonization, and the creation of the postwar international order transformed Asia more rapidly and violently than perhaps any other region in the world during the second half of the twentieth century.<Cite ids={[57, 58]}/>
+            </p>
+            <p>
+              Many of the political realities that continue to shape contemporary Asia &#x2014; the division of Korea, the Partition of India, the Chinese Civil War, the Vietnam Wars, the Arab&#x2013;Israeli conflict, postcolonial border disputes, Cold War proxy struggles, refugee movements, and the emergence of modern Asian diasporas in North America &#x2014; either began directly after 1945 or were fundamentally reshaped by the postwar order that emerged from it.<Cite ids={[45, 46]}/>
+            </p>
+            <p>
+              Since then, Asia has experienced successive waves of interstate war, civil war, occupation, insurgency, dictatorship, political repression, forced displacement, and mass violence. Some of these events became central to international historical memory. Others remained fragmented across diasporas, survivor communities, family histories, and local archives.
+            </p>
+            <p>
+              This project gathers interstate wars, occupations, insurgencies, politicide, ethnic cleansing, state repression, detention systems, and campaigns of mass political violence across Asia from 1945 to 2026. Solid bars represent armed conflict. Patterned bars represent large-scale political repression, state terror, forced displacement, or mass violence directed primarily against civilian populations.<Cite ids={[1, 2, 3, 60, 61, 62]}/>
+            </p>
+            <p>
+              The categories are necessarily imperfect. Many events move across the boundary between war and state violence. Casualty figures likewise remain contested. The estimates presented throughout are drawn from academic literature, institutional datasets, demographic studies, legal investigations, and historical scholarship, and should be read as historical approximations rather than definitive totals.<Cite ids={[47]}/>
+            </p>
+            <p>
+              This project does not argue that Asia can be reduced to violence. It argues that many contemporary Asian diasporas &#x2014; including those celebrated each May in Canada and the United States &#x2014; emerged within a broader historical landscape shaped by empire, decolonization, Cold War rivalry, migration, and displacement.
+            </p>
+          </div>
         </header>
 
         {/* STATS */}
@@ -1265,31 +1304,38 @@ export default function AsiaViolenceTimeline() {
         <section className="mt-20 sm:mt-24">
           <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: '#b8956a' }}>PART II</div>
           <h2 className="serif font-medium mb-6" style={{ color: '#f1ead9', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
-            Asian States Without Postwar Violence
+            The Conditions of Peace
           </h2>
 
+          <SubsectionHeading eyebrow="GEOGRAPHY" title="Security, geography, and the uneven distribution of stability" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              The catalogue contains six Asian states with no entry in the timeline above, under either the
-              armed conflict or the political mass violence classification: <strong style={{ color: '#f1ead9' }}>Japan,
-              Mongolia, Singapore, Brunei, Kazakhstan, and Turkmenistan</strong>. Several other states often
-              described informally as exceptions, including Bhutan, the Maldives, and Uzbekistan, do appear
-              in the timeline (the Lhotshampa expulsion, the 1988 coup attempt, and the Andijan massacre
-              respectively) and are therefore not included here. The list of true exceptions is shorter than
-              the popular narrative suggests, and what it lacks in length it makes up for in structural
-              clarity.
+              One of the clearest patterns visible across postwar Asia is not simply the recurrence of violence, but its uneven distribution. Across the eighty years recorded in this timeline, large parts of the continent moved through repeated cycles of war, partition, insurgency, occupation, dictatorship, and political repression. Yet a small number of states have no entry in the catalogue under either the armed-conflict or the political mass violence classification. Six countries belong to this group: <strong style={{ color: '#f1ead9' }}>Japan, Mongolia, Singapore, Brunei, Kazakhstan, and Turkmenistan</strong>.
+            </p>
+            <p>
+              The list is shorter than the popular narrative usually suggests. Bhutan is sometimes named informally as a model of peace, particularly in tourism literature and in some summary comparative-politics accounts. The historical record does not sustain the claim. Between 1990 and 1993, the Bhutanese state's <em>One Nation, One People</em> policy and the 1985 Citizenship Act produced a campaign that forcibly displaced approximately 108,000 ethnic Nepali Lhotshampa, documented by Human Rights Watch as ethnic cleansing.<Cite ids={[59]}/> The Maldives appears in the catalogue for the 1988 coup attempt. Uzbekistan appears for the 2005 Andijan massacre and the 2010 Kyrgyz-Uzbek violence. The six genuine exceptions are clarifying precisely because the list is short.
             </p>
           </div>
 
           <ExceptionsTable />
 
-          <SubsectionHeading eyebrow="THREE PATHS" title="What produces peace" />
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl mt-2" style={{ color: 'rgba(232,226,212,0.85)' }}>
+            <p>
+              The significance of these cases lies less in any inherent cultural disposition toward peace than in the structural conditions that made relative stability possible. The absence of major war did not necessarily imply liberal democracy, political openness, or equality. Singapore combined stability with highly securitized governance and extensive restrictions on opposition politics.<Cite ids={[48]}/> Mongolia remained deeply constrained by Soviet influence throughout much of the Cold War.<Cite ids={[49]}/> Postwar Japan developed under extensive American military protection despite constitutional restrictions on warfare.<Cite ids={[50]}/> The central question is therefore not why some Asian societies were naturally peaceful, but how peace itself became historically sustainable under particular geopolitical conditions.
+            </p>
+          </div>
+
+          <SubsectionHeading eyebrow="QUALIFICATION" title="A note on Singapore" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              The six cases divide cleanly into three archetypes rather than five overlapping conditions.
-              Each country fits exactly one archetype, and the typology is more analytically useful than a
-              count of which structural conditions any given country exhibits, because the cases are too few
-              for cumulative conditions to discriminate.
+              The early years of Singapore's modern statehood were not, in fact, free of organized violence. The communal riots of July and September 1964 produced approximately thirty-six deaths and more than five hundred injuries on the island. The Indonesia&#x2013;Malaysia Confrontation (Konfrontasi, 1963 to 1966) brought direct attacks on Singapore, including the MacDonald House bombing of March 10, 1965, which killed three civilians and wounded thirty-three. What the catalogue records, and what the comparative-politics literature largely identifies as the <em>Singaporean peace</em>, is the period after independence in August 1965, during which the post-separation Singaporean state has experienced no significant internal armed conflict or large-scale political violence. The earlier turbulence is part of the same history as the later stability; the stability did not erase what came before it, and an honest framing of Singapore as an exception requires this qualification.
+            </p>
+          </div>
+
+          <SubsectionHeading eyebrow="THREE PATHS" title="Three paths to peace" />
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+            <p>
+              The six cases divide cleanly into three archetypes rather than into a checklist of overlapping conditions. Each country fits exactly one archetype. The typology is more analytically useful than a count of which structural conditions any given country exhibits, partly because the cases are too few for cumulative conditions to discriminate among them, and partly because the underlying mechanisms differ in kind, not merely in degree.
             </p>
           </div>
 
@@ -1297,36 +1343,27 @@ export default function AsiaViolenceTimeline() {
 
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl mt-2" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              <strong style={{ color: '#f1ead9' }}>Japan</strong> is the structural outlier and the only case in the constitutional
-              alliance archetype. Article 9 of the 1947 constitution is the explicit renunciation; the 1960
-              US-Japan Security Treaty is the implicit subcontract.<Cite ids={[5]}/> The combination is
-              unusual because every other Asian state with comparable industrial weight retained military
-              projection as a sovereign function. Japan delegated it.
+              <strong style={{ color: '#f1ead9' }}>Constitutional alliance.</strong> Japan is the only case in this archetype. Article 9 of the 1947 Constitution constitutes the explicit renunciation of war as a sovereign right; the 1960 Treaty of Mutual Cooperation and Security between the United States and Japan constitutes the implicit subcontract through which the defense function was delegated.<Cite ids={[52, 53]}/> The combination was unusual then, and it remains unusual now. Every other Asian state with comparable industrial weight retained military projection as a sovereign function. Japan delegated it. John Dower's <em>Embracing Defeat</em> traces the immediate postwar conditions under which the delegation was institutionalized &#x2014; the dense interweaving of American occupation policy with Japanese reform politics, and the way in which a defeated, devastated society negotiated the terms of its own reconstruction under foreign supervision.<Cite ids={[50]}/> Chalmers Johnson's <em>MITI and the Japanese Miracle</em> documents the developmental architecture that grew within the security shadow this arrangement provided, and the way that architecture produced the postwar Japanese economy in something close to its present form.<Cite ids={[51]}/> The resulting peace was real. It was not, in any straightforward sense, a peace of Japan's own unilateral making.
             </p>
             <p>
-              <strong style={{ color: '#f1ead9' }}>Mongolia, Kazakhstan, and Turkmenistan</strong> occupy the geographic buffer
-              archetype. Each sits between major powers whose direct contest would not be resolved by
-              absorbing the buffer, and each pairs that position with alignment to the regional security
-              provider. Mongolia held a Soviet-aligned posture through 1990 and a balanced one since.
-              Kazakhstan and Turkmenistan emerged from the Soviet dissolution into a regional system in
-              which Russia retained the security role and the new states retained the option of close
-              economic ties to China and the West simultaneously. Authoritarian opacity in the latter two
-              cases means their classification depends on the absence of documented mass violence rather
-              than its proven absence, a qualification worth keeping in view.
+              <strong style={{ color: '#f1ead9' }}>Geographic buffer.</strong> Mongolia, Kazakhstan, and Turkmenistan occupy this archetype. Each sits between major powers whose direct confrontation across the territory would not, on calculation, be resolved by absorbing the buffer state, and each pairs that geographic position with alignment to the regional security provider. Mongolia held a Soviet-aligned posture through 1990 and a balanced one since, on the long arc that Morris Rossabi traces from khans through commissars to capitalists.<Cite ids={[49]}/> Kazakhstan and Turkmenistan emerged from the Soviet dissolution into a regional system in which Russia retained the principal security role and the new states retained the option of close economic ties to China and the West simultaneously. The buffer logic has held, so far, in all three cases. A qualification is required: authoritarian opacity in Kazakhstan and Turkmenistan means their inclusion among the exceptions depends on the absence of <em>documented</em> mass violence rather than on the <em>proven absence</em> of mass violence. The classification is the most defensible one available, but it is a classification under epistemic constraint, and readers are asked to keep this in view.
             </p>
             <p>
-              <strong style={{ color: '#f1ead9' }}>Singapore and Brunei</strong> share the small sheltered economy archetype.
-              Both are small enough that their absorption into a major-power calculation would yield little
-              relative to its cost, both have functional security relationships (Singapore through ASEAN
-              and substantial independent capability; Brunei through residual British arrangements after
-              1984 independence), and both run economies whose returns from trade integration exceed any
-              plausible returns from territorial assertion.
+              <strong style={{ color: '#f1ead9' }}>Small sheltered economy.</strong> Singapore and Brunei share this archetype. Both are small enough that their absorption into a major-power calculation would yield little relative to its cost. Both maintain functional security relationships &#x2014; Singapore through ASEAN, an active citizen army, and the Five Power Defence Arrangements with the United Kingdom, Australia, New Zealand, and Malaysia; Brunei through residual British arrangements that survived its 1984 independence. Both run economies whose returns from trade integration substantially exceed any plausible returns from territorial assertion. Meredith Weiss's <em>The Roots of Resilience</em>, published by Cornell University Press in 2020, frames Singapore &#x2014; together with Malaysia &#x2014; as an electoral-authoritarian hybrid regime in which authoritarian acculturation, patronage, and the depth of party-state grassroots machines sustain regime durability across successive cycles of contestation.<Cite ids={[48]}/> Brunei's smallness and the longevity of its dynastic-monarchical arrangements have, in their own way, produced an equivalent insulation.
             </p>
+          </div>
+
+          <SubsectionHeading eyebrow="DEBATE" title="Frameworks in dialogue" />
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+            <p>
+              It should be acknowledged that the framework presented here &#x2014; peace as a function of external security architecture, strategic insulation, and the geopolitical calculations of larger actors &#x2014; is not the only academic framework available, and that other scholars have weighted the causes differently. Timo Kivim&#xE4;ki and Stein T&#xF8;nnesson have argued, in extended work, for what they call a <em>developmental peace</em> in East Asia: a regional shift in elite priorities toward economic development over warfare, supported by ASEAN's principle of non-intervention, by the prioritization of welfare over warfare in the major Asian capitalist economies, and by what they have called an <em>ASEAN/Chinese Way</em> of conducting interstate relations. The two frameworks are not mutually exclusive. Developmental priorities flourish under external security guarantees, and security guarantees are sustained in part by the resulting economic interdependence. But the frameworks emphasize different causal mechanisms, and the one offered here weights the structural-geopolitical mechanism more heavily &#x2014; while acknowledging that the developmental-peace argument captures something real about how peace was reproduced, year over year, once the structural conditions were in place.
+            </p>
+          </div>
+
+          <SubsectionHeading eyebrow="SYNTHESIS" title="What produces peace" />
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p style={{ color: '#f1ead9' }}>
-              The pattern that emerges is consistent. Peace in Asia since 1945 has rarely been a matter of
-              unilateral choice. It has required occupying one of three positions in which the cost of
-              violence to a larger actor exceeds the benefit, and the larger actor's calculation has done
-              most of the work that the smaller state's domestic politics is sometimes credited with.
+              The pattern that emerges across all six cases is consistent. Peace in Asia since 1945 has rarely been a matter of unilateral domestic choice. It has required occupying one of three positions in which the cost of violence to a larger actor exceeds the benefit &#x2014; and the larger actor's calculation has done a great deal of the work that the smaller state's domestic politics is sometimes credited with. This is not a counsel of fatalism, and it is not an argument that peaceful states have no agency. It is a recognition that the small number of peaceful trajectories in postwar Asia rests on conditions that were not, in their origins, of those states' own unilateral making. Where these conditions held, peace held with them. Where they did not, peace did not.
             </p>
           </div>
         </section>
@@ -1337,89 +1374,86 @@ export default function AsiaViolenceTimeline() {
         <section className="mt-20 sm:mt-24">
           <div className="mono text-[10px] tracking-[0.3em] mb-3" style={{ color: '#b8956a' }}>PART III</div>
           <h2 className="serif font-medium mb-6" style={{ color: '#f1ead9', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
-            Imperialism, Conflict, and the Heritage Month
+            Empire, Migration, and Memory
           </h2>
 
+          <SubsectionHeading eyebrow="OPENING" title="Imperialism, conflict, and the histories behind Heritage Month" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              The relationship between the events shown above and the heritage celebrated each May in North
-              America runs through a single circuit. Western imperial intervention produced both the
-              populations now resident in Canada and the United States and many of the conditions that
-              displaced them from their countries of origin. The circuit has three phases. They overlap
-              chronologically more than the textbook account allows, but the analytical structure is
-              specific enough that the standard heritage-month narrative misses it more often than it
-              acknowledges it.
+              The relationship between the conflicts represented in this timeline and the communities commemorated each May in Canada and the United States runs through a broader historical circuit linking empire, labor, war, migration, exclusion, and memory. This is not a relationship that the Heritage Month commemorations typically name in their official iterations. Yet much of what is being commemorated only exists because of what came before it.
+            </p>
+            <p>
+              Asian Heritage Month itself emerged comparatively recently, and through specific bureaucratic instruments. In the United States, Asian/Pacific American Heritage Week was established by Public Law 95-419, signed by President Jimmy Carter on October 5, 1978. The legislation followed sustained advocacy by Capitol Hill staffers Jeanie Jew and Ruby Moy, and joint sponsorship by Representatives Frank Horton and Norman Mineta in the House and Senators Daniel Inouye and Spark Matsunaga in the Senate. Jew was motivated, in significant part, by the memory of her grandfather, a Chinese American railroad worker who had been killed amid anti-Asian violence in the late nineteenth century. The legislative motive was, in a literal sense, genealogical.<Cite ids={[63]}/>
+            </p>
+            <p>
+              May was selected partly to commemorate the arrival of the first recorded Japanese resident of the United States in May 1843 and the completion of the Transcontinental Railroad in May 1869, built in its western portion through the labor of Chinese migrants under conditions of racial exclusion and recurrent anti-Asian violence.<Cite ids={[54]}/> President George H.W. Bush expanded the observance from a week to a month in 1990, with year-by-year reauthorization through 1991. Public Law 102-450, signed by Bush on October 28, 1992, made the month-long designation permanent.<Cite ids={[63]}/>
+            </p>
+            <p>
+              Canada institutionalized the commemoration considerably later. Community-level observances existed throughout the 1990s, but formal federal recognition followed a December 2001 motion in the Senate by Vivienne Poy, the first Canadian senator of Asian ancestry. The Government of Canada formally designated May as Asian Heritage Month in May 2002.<Cite ids={[64, 65]}/>
+            </p>
+            <p>
+              The timing is historically revealing. By the moment these commemorations became institutionalized, Asian communities had already spent more than a century shaping North American economies while simultaneously living through exclusion laws, racial segregation, internment, immigration restriction, anti-Asian violence, Cold War suspicion, and refugee displacement.<Cite ids={[55]}/>
             </p>
           </div>
 
           <ImperialCircuitDiagram />
 
-          <SubsectionHeading eyebrow="PHASE ONE" title="Labour extraction" />
+          <SubsectionHeading eyebrow="MECHANISM ONE" title="The first mechanism: imperial labor extraction" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              The Chinese presence in nineteenth century North America began with railway construction and
-              Gold Rush labour, both bound up in the continental projects of the United States and Canada.
-              South Asian migration to North America emerged from British imperial labour circuits that
-              moved Indian workers across the empire. The Filipino presence in the United States began
-              after the annexation of the Philippines in 1898. The earliest Japanese migrations to Hawaii
-              occurred within the framework of plantation labour recruitment. In each case, the legal and
-              demographic foundations of today's Asian American and Asian Canadian populations were laid
-              by imperial labour extraction rather than by liberal immigration policy.<Cite ids={[5, 41]}/>
+              The first historical mechanism connecting Asia to North America was imperial labor extraction. Chinese migration accelerated through railway construction, mining economies, plantation systems, and the Gold Rush labor markets of the nineteenth century. Stanford's Chinese Railroad Workers in North America Project estimates that fifteen to twenty thousand Chinese migrants laid the tracks of the western Central Pacific portion of the Transcontinental Railroad, completed at Promontory Summit in Utah on May 10, 1869. (The eastward Union Pacific track was built largely by Irish, German, and other European immigrants, by formerly enslaved Black workers, and by Mormon contractors.) South Asian migration to North America emerged from the British imperial labor circuits that moved Indian workers across the empire and across the Pacific world. Filipino migration expanded under American colonial rule after the annexation of the Philippines in 1898. Japanese migration to Hawai&#x2018;i and the Pacific coast developed through plantation recruitment systems tied to expanding imperial-commercial networks. The first recorded Japanese resident in the United States, Manjiro Nakahama, arrived at New Bedford on May 6, 1843, on the whaling vessel that had rescued him from a shipwreck; federal commemorative materials use May 7.<Cite ids={[54]}/>
+            </p>
+            <p>
+              Asian migration to North America did not emerge through abstract multicultural openness. It developed within systems of empire, labor demand, extraction, and racial hierarchy. Lisa Lowe's <em>Immigrant Acts</em> analyzes these circuits as constitutive of the racial economic foundation of the United States, not as incidental to it.<Cite ids={[55]}/>
             </p>
           </div>
 
-          <SubsectionHeading eyebrow="PHASE TWO" title="Wars from decolonisation" />
+          <SubsectionHeading eyebrow="MECHANISM TWO" title="The second mechanism: violent decolonization" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              A striking proportion of the conflicts on this timeline trace directly to imperial dissolution.
-              The Partition of British India in 1947 produced the Kashmir wars, the Bangladesh Liberation
-              War, and the structure of the present India-Pakistan rivalry, with one to two million dead
-              and roughly fourteen to eighteen million displaced.<Cite ids={[18]}/> The French withdrawal
-              from Indochina produced the First Indochina War, which in turn produced the Vietnam War, the
-              Laotian Civil War, and the Cambodian Civil War. The Dutch departure from the East Indies
-              produced the Indonesian National Revolution and the subsequent annexations of West Papua and
-              East Timor.<Cite ids={[22]}/> The end of the British Mandate for Palestine initiated a
-              sequence of Arab-Israeli wars whose consequences continue to define the region. Iraq's
-              borders, drawn by the British, sit at the origin of both Gulf wars and the underlying Kurdish
-              question. The Cold War proxy structure that overlay these conflicts amplified them, but the
-              fault lines themselves were imperial in origin.
+              The second mechanism was violent decolonization. A striking proportion of the conflicts represented in this timeline trace directly to imperial dissolution and to the borders, populations, and unresolved questions that imperial powers left behind.
+            </p>
+            <p>
+              The Partition of British India in 1947 produced one of the largest forced migrations of the twentieth century, with between one and two million dead and approximately fourteen to eighteen million displaced. It established the underlying structure of the Kashmir conflict, the Indo-Pakistani wars, and eventually the Bangladesh Liberation War of 1971.<Cite ids={[18, 44]}/> The French withdrawal from Indochina fed sequentially into the wars in Vietnam, Laos, and Cambodia. The Dutch departure from the East Indies preceded the Indonesian National Revolution and the later conflicts over West Papua and East Timor.<Cite ids={[22]}/> The end of the British Mandate for Palestine inaugurated a sequence of regional wars whose consequences continue to define the present. Iraq's contested borders, drawn by the British in the aftermath of the Ottoman collapse, sit at the origin of both Gulf wars and of the unresolved Kurdish question.
+            </p>
+            <p>
+              The Cold War overlaid and intensified many of these fractures, but it did not create them from nothing. Asia became one of the principal theaters in which the United States, the Soviet Union, and China competed indirectly for ideological and strategic influence. Korea, Vietnam, Afghanistan, Cambodia, Laos, Indonesia, and large parts of the Middle East became sites where local struggles fused with superpower rivalry.<Cite ids={[45]}/> Christopher Bayly and Tim Harper's <em>Forgotten Wars</em> recovers the linked Southeast Asian decolonizations of this period with particular care;<Cite ids={[57]}/> Prasenjit Duara's <em>Decolonization: Perspectives from Now and Then</em> situates the Asian cases within the broader pattern of postwar state formation under conditions of geopolitical pressure.<Cite ids={[58]}/>
             </p>
           </div>
 
-          <SubsectionHeading eyebrow="PHASE THREE" title="The migration windows open" />
+          <SubsectionHeading eyebrow="MECHANISM THREE" title="The third mechanism: refugee production and immigration reform" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              The <strong style={{ color: '#f1ead9' }}>Hart-Celler Act of 1965</strong> in the United States and the
-              introduction of points-based immigration in Canada in 1967 removed the explicit racial
-              exclusions that had previously limited Asian immigration. These reforms took effect precisely
-              during the decades when Asia was producing the largest refugee outflows of the twentieth
-              century's second half. The Vietnamese, Cambodian, Laotian, Hmong, Afghan, Iranian, Lebanese,
-              Sri Lankan Tamil, Iraqi, Syrian, and Rohingya diasporas in North America arrived in part
-              because legal access opened during the same years that the wars on this timeline were
-              forcibly producing migrants.<Cite ids={[4]}/> The Bhutanese Lhotshampa resettlement under
-              the post-2007 programme is a more recent instance of the same dynamic.<Cite ids={[4, 41]}/>
+              The third mechanism was the synchronization of refugee production with immigration reform in North America. The United States Immigration and Nationality Act of 1965, often referred to as Hart-Celler, and Canada's introduction of a points-based immigration system through Order-in-Council PC 1967-1616 in August 1967, dismantled much of the explicit racial architecture that had previously restricted Asian migration. These reforms coincided historically with decades during which Asia generated some of the largest refugee flows in the world.
+            </p>
+            <p>
+              The Vietnamese, Cambodian, Laotian, Hmong, Afghan, Iranian, Lebanese, Sri Lankan Tamil, Iraqi, Syrian, and Rohingya diasporas in North America took shape, in significant part, because legal pathways to entry expanded during the same years that wars, occupations, authoritarian regimes, and state collapse displaced millions of people across Asia.<Cite ids={[4, 56]}/> The third-country resettlement of approximately ninety thousand Bhutanese Lhotshampa after 2007, primarily to the United States, is a more recent expression of the same synchronization &#x2014; a refugee population produced by a state campaign of ethnic cleansing in the early 1990s, then received by North American states whose immigration architecture had, by the time of resettlement, been adapted to receive them.<Cite ids={[59]}/>
+            </p>
+            <p>
+              Yen Le Espiritu's <em>Body Counts</em> names the resulting condition with particular precision in the Vietnamese case. The refugees produced by the American war were absorbed into an American national narrative that simultaneously memorialized the war as a tragedy and rendered the refugees themselves as evidence of American humanitarianism &#x2014; a structure that Espiritu calls <em>militarized refuge</em>. The framing applies, with adjustments, to other diasporic cases as well: the refugee is welcomed within a frame that obscures what produced the refugee.<Cite ids={[56]}/>
             </p>
           </div>
 
-          <SubsectionHeading eyebrow="CLOSING" title="What the holiday misses" />
+          <SubsectionHeading eyebrow="REBUILDING" title="Reconstruction" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              The resulting structure can be stated concisely. Asian American and Asian Canadian communities are,
-              in significant part, the human residue of Western imperial labour extraction in its first phase
-              and of Western or Western-aligned military intervention in its second. Asian Heritage Month
-              celebrates these communities' contributions to the host society without naming the imperial
-              and military circuit through which the underlying displacements occurred. The month is not
-              dishonest, but it is incomplete in a manner that mirrors the incomplete public memory of
-              decolonisation and the Cold War.
+              Yet the history that emerges from this circuit cannot be understood only through rupture. The same communities shaped by displacement, exclusion, and migration have also transformed the societies they entered. Asian communities across Canada and the United States built businesses, labor networks, cultural institutions, religious organizations, political movements, artistic traditions, research institutions, scholarly disciplines, and forms of community care that have become inseparable from North American life.<Cite ids={[54]}/> Asian Heritage Month exists, in part, because these histories were too important to remain peripheral to the national stories that produced them.
+            </p>
+            <p>
+              The history of Asian North America is therefore not only a history of suffering, displacement, or war. It is also a history of reconstruction: of people rebuilding social worlds across languages, borders, and generations; of communities transforming exclusion into political organization; of migrants, refugees, workers, students, scholars, artists, and families reshaping the societies around them while carrying memories of other places.
+            </p>
+          </div>
+
+          <SubsectionHeading eyebrow="CLOSING" title="What the holiday holds, and what it misses" />
+          <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
+            <p>
+              The standard institutional form of the commemoration tends to celebrate the arrival without commemorating the departure. It tells a story of contribution, belonging, and resilience, but it elides the imperial and military circuits through which many of the underlying displacements occurred. The month is not dishonest. It is incomplete, in a manner that mirrors the incomplete public memory of decolonization and the Cold War more generally.
+            </p>
+            <p>
+              A more rigorous version of the commemoration would hold two recognitions together rather than one. It would acknowledge that the cuisine, the languages, the literatures, the kinship networks, the religious traditions, and the families being celebrated are not separable from the displacements that brought many of them to the host country &#x2014; and that the displacements themselves were not random events but were substantially produced by policies and conflicts whose continuities extend into the present.
             </p>
             <p style={{ color: '#f1ead9' }}>
-              A more rigorous version of the holiday would hold two recognitions together rather than one.
-              It would acknowledge that the cuisine, the languages, the literatures, and the families being
-              celebrated are not separable from the displacement that brought many of them to the host
-              country, and that the displacement was not random but was substantially produced by policies
-              whose continuities extend into the present. The current framing commemorates arrival. A
-              fuller framing would also remember the departure, and would name what made each departure
-              necessary.
+              To remember the violence that shaped postwar Asia is not to reduce Asian history to violence. It is to understand more fully the scale of what people survived, what they rebuilt, what they carried forward, and what they created afterward.
             </p>
           </div>
         </section>
@@ -1433,108 +1467,48 @@ export default function AsiaViolenceTimeline() {
             Methodology, Caveats, and Uncertainties
           </h2>
 
-          <SubsectionHeading eyebrow="REFERENCE SYSTEM" title="How sources are cited" />
+          <SubsectionHeading eyebrow="CITATION" title="Citation system" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              This artifact uses a <strong style={{ color: '#f1ead9' }}>numeric reference system in the Vancouver style</strong>:
-              every claim attributable to a specific source carries a superscript number in the text, and
-              the full bibliographic entry appears in the numbered list at the bottom of the page. Click
-              any superscript to scroll directly to the matching reference; the destination row briefly
-              highlights so the eye can find it. The numbering is consistent across event tooltips and
-              analytical text, so reference 18 is Talbot and Singh's <em>The Partition of India</em>
-              wherever it appears. Reference 41 (Wikipedia) is used where a single primary source has not
-              been established but the underlying facts have been verified against the cited primary
-              literature.
+              This project uses a numeric reference system in the Vancouver style. Every claim attributable to a specific source carries a superscript number in the text, and the full bibliographic entry appears in the numbered list at the end of the page. Clicking any superscript scrolls directly to the matching reference; the destination row briefly highlights, so that the eye can locate it. The numbering is consistent across event tooltips and analytical text &#x2014; reference 18, for example, is Talbot and Singh's <em>The Partition of India</em> wherever it appears.
             </p>
           </div>
 
-          <SubsectionHeading eyebrow="METHODOLOGY" title="How events are classified and counted" />
+          <SubsectionHeading eyebrow="METHODOLOGY" title="Classification and counting" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              The catalogue distinguishes two analytical categories. <strong style={{ color: '#f1ead9' }}>Armed Conflict</strong>
-              covers interstate wars, civil wars, sustained insurgencies, and short but consequential
-              conventional clashes, and is represented in solid bars. <strong style={{ color: '#f1ead9' }}>Political Mass
-              Violence</strong> covers state repression, politicide, ethnic cleansing, genocide, policy-induced
-              famine, and systematic detention, and is represented in patterned bars with a PV badge.
-              Sub-events such as the Yazidi genocide and the Mullivaikkal mass killing are treated alongside
-              their parent conflicts where analytically warranted. The geographic scope follows the
-              conventional United Nations Asia scheme, including the South Caucasus and the Soviet Union
-              only as an external actor in conflicts whose opponent is an Asian state (the Sino-Soviet
-              Border Conflict and the Soviet-Afghan War). Casualty and displacement figures are mid-range
-              estimates drawn from the cited sources. The cumulative displacement total double-counts
-              individuals displaced more than once.<Cite ids={[1, 2, 3, 4]}/>
+              The catalogue distinguishes two analytical categories. <em>Armed Conflict</em> includes interstate wars, civil wars, sustained insurgencies, and short but consequential conventional clashes; these appear in the timeline as solid bars. <em>Political Mass Violence</em> includes state repression, politicide, ethnic cleansing, genocide, policy-induced famine, and systematic detention; these appear as patterned bars marked with a PV badge. Where analytically warranted, sub-events such as the Yazidi genocide and the Mullivaikkal mass killing are treated alongside their parent conflicts rather than as separate entries. The geographic scope follows the conventional United Nations Asia scheme, including the South Caucasus and including the Soviet Union only where it appears as an external actor in conflicts whose opponent is an Asian state &#x2014; the Sino-Soviet Border Conflict and the Soviet-Afghan War. Casualty and displacement figures are mid-range estimates drawn from the cited sources. The cumulative displacement total double-counts individuals displaced more than once. This is a known feature of the methodology rather than an error.
+            </p>
+            <p>
+              The two analytical categories draw on different evidentiary regimes, and the distinction matters more than a casual reader might assume. The Uppsala Conflict Data Program (UCDP) and the PRIO Battle Deaths Dataset code state-based armed conflict, non-state conflict, and one-sided violence above a twenty-five-deaths-per-year threshold. Both restrict the count to battle-related fatalities, and neither separately codes politicide, ethnic cleansing, deaths in detention, or non-fatal state repression.<Cite ids={[1, 2]}/> The Armed Conflict Location and Event Data Project (ACLED) records discrete political-violence events &#x2014; battles, explosions and remote violence, violence against civilians &#x2014; and demonstrations; ACLED achieved full global real-time coverage only in 2022, which means historical depth varies considerably across the catalogue.<Cite ids={[3]}/>
+            </p>
+            <p>
+              For the broader categories that this project also includes &#x2014; politicide, mass detention, systematic state repression, policy-induced famine &#x2014; the analytical literature draws on Barbara Harff's Genocide/Politicide dataset,<Cite ids={[60]}/> the Political Terror Scale,<Cite ids={[61]}/> and the Political Instability Task Force <em>State Failure</em> dataset,<Cite ids={[62]}/> supplemented by individual UN Commission of Inquiry reports and by academic monographs cited per event.<Cite ids={[8, 41]}/> Lacina and Gleditsch's 2005 article in the <em>European Journal of Population</em> sets out the methodological distinctions between combatant deaths, battle deaths, and war deaths that this project follows.<Cite ids={[47]}/>
             </p>
           </div>
 
           <SubsectionHeading eyebrow="CAVEATS" title="Five categories of uncertainty" />
           <div className="space-y-4 sans text-[14px] sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: 'rgba(232,226,212,0.85)' }}>
             <p>
-              The casualty figures presented here are mid-range estimates, and the certainty conveyed by any
-              single number frequently exceeds the certainty that the underlying historiography supports.
-              The first source of uncertainty is <strong style={{ color: '#f1ead9' }}>definitional</strong>. The line between an
-              armed conflict and a campaign of political mass violence is analytically useful but empirically
-              porous. The Indonesian Mass Killings of 1965 to 1966 are coded here as an armed conflict
-              because they involved organised military mobilisation, but they could equally be classified
-              as politicide. Comparable ambiguities apply to the Khmer Rouge regime, the second JVP
-              insurrection in Sri Lanka, the Anfal campaign, and the West Papua conflict. The category
-              distinction is a heuristic rather than a finding.
+              The casualty figures presented throughout are mid-range estimates. The certainty conveyed by any single number frequently exceeds the certainty that the underlying historiography supports, and readers are asked to keep this in view.
             </p>
             <p>
-              The second is <strong style={{ color: '#f1ead9' }}>numerical uncertainty within events</strong>. The Great Leap
-              Forward famine ranges from thirty to forty-five million across reputable scholarly estimates
-              depending on demographic assumptions;<Cite ids={[10, 11, 13]}/> the Cultural Revolution from
-              1.1 to 1.7 million on Walder's county-annal analysis;<Cite ids={[14]}/> Tiananmen from several
-              hundred (most scholarly estimates) to ten thousand (the declassified British diplomatic cable
-              from a State Council source); the Partition of India from one to two million in Talbot and
-              Singh's authoritative range to higher figures elsewhere;<Cite ids={[18]}/> the 1988 Iranian
-              executions from twenty-eight hundred (Amnesty) to thirty thousand (MEK);<Cite ids={[7, 40]}/>
-              the Bangladesh Liberation War from three hundred thousand (Rahman et al. in PLOS One, 2025)
-              to three million (Bangladeshi state).<Cite ids={[39, 44]}/> These ranges reflect genuine and
-              politically charged disputes about counting methods, source access, and the boundary between
-              direct killing and indirect mortality.
+              The first source of uncertainty is <em>definitional</em>. The line between an armed conflict and a campaign of political mass violence is analytically useful but empirically porous. The Indonesian Mass Killings of 1965 to 1966 are coded here as an armed conflict because they involved organized military mobilization, but they could equally be classified as politicide. Comparable ambiguities apply to the Khmer Rouge regime, the second JVP insurrection in Sri Lanka, the Anfal campaign in Iraqi Kurdistan, and the West Papua conflict. The category distinction is a heuristic. It is useful, but it is not a finding.
             </p>
             <p>
-              The third concerns <strong style={{ color: '#f1ead9' }}>contested legal and political terminology</strong>. The
-              Xinjiang campaign is designated genocide by the legislatures of the United States, the United
-              Kingdom, Canada, and the Netherlands, while the UN Office of the High Commissioner for Human
-              Rights found acts that may constitute crimes against humanity without applying the genocide
-              label.<Cite ids={[8, 20]}/> The Sri Lankan civil war's final phase has been characterised as
-              genocide by the Permanent Peoples' Tribunal but not by the UN Panel of Experts.<Cite ids={[23]}/>
-              The Anfal campaign was classified as genocide by the Dutch Hague court in 2005 and the Iraqi
-              Supreme Criminal Tribunal in 2010. The Rohingya case is the subject of an active International
-              Court of Justice proceeding under the Genocide Convention.<Cite ids={[21]}/> The labels matter
-              for international law, for memory politics, and for diaspora mobilisation, but they are not
-              uniformly applied across cases that involve comparable patterns of violence.
+              The second is <em>numerical uncertainty within events</em>. The Great Leap Forward famine ranges from 30 to 45 million across reputable scholarly estimates, depending on demographic assumptions.<Cite ids={[10, 11, 13]}/> The Cultural Revolution ranges from 1.1 to 1.7 million on Andrew Walder's county-annal analysis.<Cite ids={[14]}/> Tiananmen ranges from several hundred (most scholarly estimates) to ten thousand (a declassified British diplomatic cable citing a State Council source). The Partition of India ranges from one to two million in Talbot and Singh's authoritative figures to higher numbers elsewhere.<Cite ids={[18]}/> The 1988 Iranian executions range from 2,800 (Amnesty International) to 30,000 (the Mojahedin-e Khalq's estimate).<Cite ids={[7, 40]}/> The Bangladesh Liberation War ranges from approximately 300,000 (Rahman and colleagues in <em>PLOS One</em>, 2025) to three million (the official Bangladeshi state figure).<Cite ids={[39, 44]}/> These ranges reflect genuine and often politically charged disputes about counting methods, source access, and the contested boundary between direct killing and indirect mortality.
             </p>
             <p>
-              The fourth is <strong style={{ color: '#f1ead9' }}>source-quality variation</strong>. Dik\u00f6tter's high-end
-              figure of forty-five million for the Great Leap Forward has been criticised by historians
-              including Felix Wemheuer for methodological choices in extrapolating from local archival
-              samples; the broadly accepted range remains thirty to forty-five million.<Cite ids={[10, 11]}/>
-              The Mojahedin-e Khalq's figure of thirty thousand for the 1988 Iranian executions exceeds
-              Amnesty International's and Human Rights Watch's estimates by roughly an order of magnitude
-              and reflects the organisation's own positioning rather than independent verification. The
-              Falun Gong death-in-custody figures compiled by Minghui are practitioner-compiled and have
-              been used by the China Tribunal as evidence, but they cannot be independently audited under
-              current Chinese conditions.<Cite ids={[35]}/>
+              The third concerns <em>contested legal and political terminology</em>. The Xinjiang campaign has been designated genocide by the legislatures of the United States, the United Kingdom, Canada, and the Netherlands. The UN Office of the High Commissioner for Human Rights found acts that may constitute crimes against humanity, but did not apply the genocide label.<Cite ids={[8, 20]}/> The final phase of the Sri Lankan civil war has been characterized as genocide by the Permanent Peoples' Tribunal but not by the UN Panel of Experts.<Cite ids={[23]}/> The Anfal campaign was classified as genocide by the Dutch Hague court in 2005 and by the Iraqi Supreme Criminal Tribunal in 2010. The Rohingya case is the subject of an active International Court of Justice proceeding under the Genocide Convention.<Cite ids={[21]}/> These labels matter &#x2014; for international law, for memory politics, for diaspora mobilization &#x2014; and they are not uniformly applied across cases that involve comparable patterns of violence.
             </p>
             <p>
-              The fifth concerns the <strong style={{ color: '#f1ead9' }}>ongoing nature of certain events</strong>. The
-              Xinjiang campaign, the North Korean kwalliso system, the Falun Gong persecution, the Myanmar
-              military's repression, the West Papua conflict, and the Israeli operations in Gaza and
-              Lebanon as of May 2026 are not closed historical events. Their casualty and displacement
-              figures are running totals that may change substantially in the coming years, and the
-              political characterisation of these events is in many cases the subject of ongoing
-              international litigation and diplomatic dispute.<Cite ids={[27, 33, 42]}/>
+              The fourth is <em>source-quality variation</em>. Frank Dik&#xF6;tter's high-end figure of 45 million for the Great Leap Forward has been criticized by historians, including Felix Wemheuer, for the methodological choices involved in extrapolating from local archival samples; the broadly accepted range remains 30 to 45 million.<Cite ids={[10, 11]}/> The Mojahedin-e Khalq's figure of 30,000 for the 1988 Iranian executions exceeds Amnesty International's and Human Rights Watch's estimates by roughly an order of magnitude and reflects the organization's own positioning rather than independent verification. The Falun Gong death-in-custody figures compiled by Minghui are practitioner-compiled; they have been used by the China Tribunal as evidence, but they cannot be independently audited under current conditions in the People's Republic of China.<Cite ids={[35]}/>
+            </p>
+            <p>
+              The fifth concerns <em>the ongoing nature of certain events</em>. The Xinjiang campaign, the North Korean <em>kwalliso</em> system, the Falun Gong persecution, the Myanmar military's repression, the West Papua conflict, and the Israeli operations in Gaza and Lebanon as of May 2026 are not closed historical events. Their casualty and displacement figures are running totals that may change substantially in the coming years, and their political characterization is, in many cases, the subject of ongoing international litigation and diplomatic dispute.<Cite ids={[27, 33, 42]}/>
             </p>
             <p style={{ color: '#f1ead9' }}>
-              The compiled total of approximately eighty million dead across all events is anchored
-              substantially by Chinese political campaigns and famines, which alone account for thirty-five
-              to fifty-five million. The right inference from these numbers is structural rather than
-              precise: that the human cost of state and inter-state violence in Asia since 1945 is of an
-              order of magnitude that warrants the same kind of public recognition the European twentieth
-              century has received, even where the precise figure for any particular event remains
-              contested.
+              The compiled total of approximately seventy million dead across all events is anchored substantially by Chinese political campaigns and famines, which alone account for 35 to 55 million. The right inference from these numbers is structural rather than precise. The human cost of state and inter-state violence in Asia since 1945 is of an order of magnitude that warrants the same kind of sustained public recognition that the European twentieth century has received &#x2014; even where the precise figure for any particular event remains contested.
             </p>
           </div>
         </section>
@@ -1547,22 +1521,45 @@ export default function AsiaViolenceTimeline() {
           <h2 className="serif font-medium mb-6" style={{ color: '#f1ead9', fontSize: 'clamp(26px, 4vw, 32px)', lineHeight: 1.1 }}>
             Citation Reference List
           </h2>
-          <ol className="sans text-[12px] sm:text-[13px] leading-relaxed" style={{ color: 'rgba(232,226,212,0.75)' }}>
-            {CITATIONS.map(c => (
-              <li key={c.n} id={'ref-' + c.n} className="flex gap-3 px-2 py-1"
-                style={{ scrollMarginTop: '2rem', borderBottom: '1px solid rgba(232,226,212,0.04)' }}>
-                <span className="mono shrink-0" style={{ color: '#b8956a', minWidth: '28px' }}>{c.n}.</span>
-                <span className="flex-1 min-w-0">
-                  {c.text}{' '}
-                  <a href={c.url} target="_blank" rel="noopener noreferrer"
-                    className="underline break-all"
-                    style={{ color: 'rgba(184,149,106,0.85)' }}>
-                    {c.url.replace(/^https?:\/\//, '')}
-                  </a>
-                </span>
-              </li>
-            ))}
-          </ol>
+          {(() => {
+            const REF_SECTIONS = [
+              { startAt: 1,  label: "Datasets and institutional sources" },
+              { startAt: 10, label: "Books and articles cited in the event catalogue" },
+              { startAt: 20, label: "Event-specific reports and investigations" },
+              { startAt: 45, label: "Scholarship cited in the analytical sections" },
+              { startAt: 60, label: "Politicide, repression, and state-failure datasets" },
+              { startAt: 63, label: "Heritage Month institutional history" },
+            ];
+            return (
+              <ol className="sans text-[12px] sm:text-[13px] leading-relaxed" style={{ color: 'rgba(232,226,212,0.75)' }}>
+                {CITATIONS.map(c => {
+                  const section = REF_SECTIONS.find(s => s.startAt === c.n);
+                  return (
+                    <React.Fragment key={c.n}>
+                      {section && (
+                        <li className="mono text-[10px] tracking-[0.25em] mt-6 mb-2 px-2"
+                          style={{ color: '#b8956a', listStyle: 'none' }}>
+                          {section.label.toUpperCase()}
+                        </li>
+                      )}
+                      <li id={'ref-' + c.n} className="flex gap-3 px-2 py-1"
+                        style={{ scrollMarginTop: '2rem', borderBottom: '1px solid rgba(232,226,212,0.04)' }}>
+                        <span className="mono shrink-0" style={{ color: '#b8956a', minWidth: '28px' }}>{c.n}.</span>
+                        <span className="flex-1 min-w-0">
+                          {c.text}{' '}
+                          <a href={c.url} target="_blank" rel="noopener noreferrer"
+                            className="underline break-all"
+                            style={{ color: 'rgba(184,149,106,0.85)' }}>
+                            {c.url.replace(/^https?:\/\//, '')}
+                          </a>
+                        </span>
+                      </li>
+                    </React.Fragment>
+                  );
+                })}
+              </ol>
+            );
+          })()}
         </section>
 
       </div>
