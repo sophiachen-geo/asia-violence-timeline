@@ -1371,14 +1371,15 @@ export default function AsiaViolenceTimeline() {
                 HOW TO READ THE CONVERGENCE VIEW
               </div>
               <p className="sans text-[14px] sm:text-[15px] leading-relaxed mb-3" style={{ color: 'rgba(var(--text-rgb),0.85)' }}>
-                The map below encodes each catalogue event through three orthogonal visual channels on a stylized longitude/latitude projection of Asia. None of the channels overlap; each is independent of the others.
+                The map below sits on a coarse, hand-traced silhouette of Asia &#x2014; deliberately rough, so it reads as a cartographic gesture rather than an atlas illustration. Each catalogue event is encoded through four channels. None overlap; each is independent of the others.
               </p>
               <dl className="m-0">
                 {[
                   { term: 'Shape encodes category.', def: 'A filled circle marks an armed conflict (interstate war, civil war, sustained insurgency, conventional clash). A filled diamond marks a campaign of political mass violence (politicide, ethnic cleansing, genocide, policy-induced famine, or systematic detention).' },
-                  { term: 'Core size encodes fatalities.', def: 'The radius of the solid core scales with the mid-range estimate of people killed during the event, drawn from the cited primary sources.' },
+                  { term: 'Core size encodes fatalities.', def: "The radius of the solid core scales with the mid-range estimate of people killed during the event, drawn from the cited primary sources. The same total is shown on every country involved; figures are not split by country." },
                   { term: 'Halo size encodes displacement.', def: "The translucent ring scales with the mid-range estimate of people displaced over the event's duration. Events without a recorded displacement figure render with no halo." },
                   { term: 'Colour encodes region.', def: "Each symbol takes the colour of the country at which it is plotted, not of the event's protagonist. An event spanning multiple countries appears once per country, each in that country's regional colour." },
+                  { term: 'Arcs connect parties.', def: "Hovering or selecting an event that involves two or more states draws a dashed arc between each pair of countries named in the catalogue, in the event's region colour. The arcs are an editorial gesture, not a vector of attack." },
                 ].map(row => (
                   <div key={row.term} className="grid sm:grid-cols-[220px_1fr] gap-1 sm:gap-4 py-2.5"
                     style={{ borderTop: '1px solid rgba(var(--text-rgb),0.18)' }}>
