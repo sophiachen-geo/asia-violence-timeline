@@ -1,6 +1,8 @@
-# Asia, 1945 to 2026 · Conflict and State Violence
+# After Empire · Asia, 1945 to 2026
 
-Interactive timeline of 136 events across 40 Asian countries since the Second World War. Combined record of armed conflict and political mass violence with reactive statistics, country filters, year-range slider, and analytical essays.
+An independent personal research and memory project. A versioned, interpretive catalogue of armed conflict and one-sided violence across Asia since the Second World War, paired with analytical essays.
+
+This repository is not affiliated with, endorsed by, reviewed by, or representative of any employer, humanitarian organization, government, or academic institution.
 
 ## Stack
 
@@ -15,13 +17,18 @@ npm run dev
 
 Site at `http://localhost:5173/asia-violence-timeline/`.
 
-## Deploy
+## Branches
 
-Push to `main`. GitHub Action builds and deploys to Pages.
+- `main` — public placeholder ("A quiet pause") served at the Pages URL.
+- `icrc-alignment` — full project source, not auto-deployed.
 
-Before first push:
-1. Set the `BASE` constant in `vite.config.ts` to match your repo path.
-2. In repo Settings → Pages, set Source to **GitHub Actions** (not "Deploy from branch").
+## Build
+
+```bash
+npm run build
+```
+
+The deploy workflow (`.github/workflows/deploy.yml`) runs on push to `main` only.
 
 ## Project layout
 
@@ -29,10 +36,14 @@ Before first push:
 src/
   main.tsx                       React entry
   App.tsx                        thin wrapper
-  asia_violence_timeline.jsx     single-file component, ~210 KB
-  index.css                      Tailwind directives
-index.html                       Google Fonts preconnect, SEO meta
+  asia_violence_timeline.jsx     essay + catalogue
+  Convergence.jsx                map / histogram / dashboard view
+  data/
+    asia_outline.js              stylised Asia silhouette (lon/lat)
+    country_coords.js            label / event-marker centroids
+  useTheme.js                    light/dark toggle
+index.html
 vite.config.ts                   base path for GH Pages
 ```
 
-The timeline ships as one large `.jsx` file containing the event catalogue inline. Refactor into separate `data/events.ts` and `components/*.tsx` files when convenient; Claude Code handles the split well.
+The catalogue is downloadable from the Methodology section as a coded CSV with one row per event.

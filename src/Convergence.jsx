@@ -261,12 +261,16 @@ export default function Convergence() {
     name: e.name,
     region: e.region,
     countries: e.countries,
-    cat: e.category === 'Political Violence' ? 'PV' : 'AC',
+    cat: e.category === 'One-sided Violence' ? 'OSV' : 'AC',
     start: e.start,
     end: e.end,
     ongoing: !!e.ongoing,
+    excludedFromTotal: !!e.excludedFromTotal,
     deaths: e.deaths,
     displaced: e.displaced,
+    // Estimates feed the symbol radius regardless of excludedFromTotal,
+    // so the reader still sees the event on the map. Cumulative totals
+    // below skip excludedFromTotal events explicitly.
     deathsEst: parseEstimate(e.deaths),
     displacedEst: parseEstimate(e.displaced),
     note: e.note,
@@ -308,7 +312,7 @@ export default function Convergence() {
   // Filtered events.
   const events = useMemo(() => EVENTS.filter(e => {
     if (cat === 'AC' && e.cat !== 'AC') return false;
-    if (cat === 'PV' && e.cat !== 'PV') return false;
+    if (cat === 'OSV' && e.cat !== 'OSV') return false;
     if (!regionSet.has(e.region)) return false;
     if (countrySet.size > 0 && !e.countries.some(c => countrySet.has(c))) return false;
     if (e.end < yearRange[0] || e.start > yearRange[1]) return false;
@@ -342,7 +346,7 @@ export default function Convergence() {
         if (!g[c]) return;
         for (let y = e.start; y <= e.end; y++) {
           g[c][y].evs.push(e);
-          if (e.cat === 'PV') g[c][y].hasPV = true; else g[c][y].hasAC = true;
+          if (e.cat === 'OSV') g[c][y].hasPV = true; else g[c][y].hasAC = true;
         }
       });
     });
@@ -361,9 +365,14 @@ export default function Convergence() {
 
   const periodTotals = useMemo(() => {
     const overlapping = events.filter(e => e.end >= yearRange[0] && e.start <= yearRange[1]);
-    const deathsSum = overlapping.reduce((s, e) => s + (e.deathsEst || 0), 0);
-    const displacedSum = overlapping.reduce((s, e) => s + (e.displacedEst || 0), 0);
-    return { evCount: overlapping.length, events: overlapping, deathsSum, displacedSum };
+    // excludedFromTotal events (e.g. Laogai, Falun Gong, Xinjiang,
+    // kwalliso) are visualised on the map but skipped here because
+    // their mortality figures are not auditable mid-range estimates.
+    const totalable = overlapping.filter(e => !e.excludedFromTotal);
+    const deathsSum = totalable.reduce((s, e) => s + (e.deathsEst || 0), 0);
+    const displacedSum = totalable.reduce((s, e) => s + (e.displacedEst || 0), 0);
+    const excludedCount = overlapping.length - totalable.length;
+    return { evCount: overlapping.length, events: overlapping, deathsSum, displacedSum, excludedCount };
   }, [events, yearRange]);
 
   useEffect(() => {
@@ -556,7 +565,7 @@ export default function Convergence() {
           {/* Filter rows */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'flex-start', marginBottom: 18 }}>
             <FilterGroup label="CATEGORY" T={T}>
-              {[['Both', 'BOTH'], ['AC', 'ARMED CONFLICT'], ['PV', 'POLITICAL VIOLENCE']].map(([k, lbl]) => (
+              {[['Both', 'BOTH'], ['AC', 'ARMED CONFLICT'], ['OSV', 'ONE-SIDED VIOLENCE']].map(([k, lbl]) => (
                 <button key={k} onClick={() => setCat(k)} className="cv-mono"
                         style={pill(cat === k, T.accent, isPhone, theme)}>{lbl}</button>
               ))}
@@ -684,19 +693,23 @@ export default function Convergence() {
           <StatsColumn
             T={T} isPhone={isPhone}
             heading={`WITHIN PERIOD · ${yearRange[0]} TO ${yearRange[1]}`}
-            subheading="Events in the catalogue overlapping this range. Estimated death and displacement totals are the sum of mid-range figures across overlapping events; treat as order-of-magnitude, not precise."
+            subheading={
+              <>
+                Catalogue events overlapping this range. <strong>Estimated total dead</strong>: approximate cumulative deaths, using mid-range estimates where available — not a precise total, not directly comparable across event types, and may include indirect mortality for some events and direct deaths only for others. <strong>Estimated total displaced</strong>: approximate cumulative displacement events — almost certainly double-counts people displaced more than once and excludes events without reliable displacement estimates.{periodTotals.excludedCount > 0 ? ` ${periodTotals.excludedCount} event${periodTotals.excludedCount === 1 ? '' : 's'} excluded from totals (mortality not auditable).` : ''}
+              </>
+            }
             items={(() => {
               const acCount = periodTotals.events.filter(e => e.cat === 'AC').length;
-              const pvCount = periodTotals.events.filter(e => e.cat === 'PV').length;
+              const pvCount = periodTotals.events.filter(e => e.cat === 'OSV').length;
               const total = { label: 'Events overlapping range', value: periodTotals.evCount, big: true, color: T.accent };
               const deaths = { label: 'Estimated total dead', value: fmtCompact(periodTotals.deathsSum) };
               const displaced = { label: 'Estimated total displaced', value: fmtCompact(periodTotals.displacedSum) };
               if (cat === 'AC') return [total, { label: 'Armed conflict', value: acCount }, deaths, displaced];
-              if (cat === 'PV') return [total, { label: 'Political violence', value: pvCount }, deaths, displaced];
+              if (cat === 'OSV') return [total, { label: 'One-sided violence', value: pvCount }, deaths, displaced];
               return [
                 total,
                 { label: 'Armed conflict', value: acCount },
-                { label: 'Political violence', value: pvCount },
+                { label: 'One-sided violence', value: pvCount },
                 deaths,
                 displaced,
               ];
@@ -815,16 +828,17 @@ export default function Convergence() {
           }}>
             {(() => {
               const acCount = activeInYear.filter(e => e.cat === 'AC').length;
-              const pvCount = activeInYear.filter(e => e.cat === 'PV').length;
-              const deathsSum = activeInYear.reduce((s, e) => s + (e.deathsEst || 0), 0);
-              const displacedSum = activeInYear.reduce((s, e) => s + (e.displacedEst || 0), 0);
+              const pvCount = activeInYear.filter(e => e.cat === 'OSV').length;
+              const totalable = activeInYear.filter(e => !e.excludedFromTotal);
+              const deathsSum = totalable.reduce((s, e) => s + (e.deathsEst || 0), 0);
+              const displacedSum = totalable.reduce((s, e) => s + (e.displacedEst || 0), 0);
               const ac = { label: 'Armed conflict', value: acCount };
-              const pv = { label: 'Political violence', value: pvCount };
+              const pv = { label: 'One-sided violence', value: pvCount };
               const dead = { label: 'Estimated total dead', value: fmtCompact(deathsSum) };
               const displaced = { label: 'Estimated total displaced', value: fmtCompact(displacedSum) };
               const items =
                 cat === 'AC' ? [ac, dead, displaced] :
-                cat === 'PV' ? [pv, dead, displaced] :
+                cat === 'OSV' ? [pv, dead, displaced] :
                 [ac, pv, dead, displaced];
               return items.map(it => (
                 <div key={it.label} style={{ minWidth: 90 }}>
@@ -972,7 +986,7 @@ export default function Convergence() {
               const col = regions[cReg].color;
               const isSel = selectedEvent && selectedEvent.name === e.name;
               const dim = (mapHover && mapHover.event.name !== e.name) || (selectedEvent && !isSel);
-              const isPV = e.cat === 'PV';
+              const isPV = e.cat === 'OSV';
               const isBlink = blinkEvents.has(e.name);
               const diamond = `${x},${y - rCore} ${x + rCore},${y} ${x},${y + rCore} ${x - rCore},${y}`;
               const haloDiamond = rHalo > rCore
@@ -1052,7 +1066,7 @@ export default function Convergence() {
                 color: popupColor, marginBottom: 4,
                 whiteSpace: 'normal',
               }}>
-                {mapHover.event.cat === 'PV' ? 'POLITICAL VIOLENCE' : 'ARMED CONFLICT'}{mapHover.country ? ` · ${mapHover.country.toUpperCase()}` : ''}
+                {mapHover.event.cat === 'OSV' ? 'ONE-SIDED VIOLENCE' : 'ARMED CONFLICT'}{mapHover.country ? ` · ${mapHover.country.toUpperCase()}` : ''}
               </div>
               <div className="cv-serif" style={{
                 fontSize: 15, fontWeight: 500, color: T.text,
@@ -1107,7 +1121,7 @@ export default function Convergence() {
                     })()}
                   </svg>
                   <span className="cv-serif" style={{ fontSize: 14, color: T.text }}>
-                    Political Violence
+                    One-sided violence
                   </span>
                 </div>
               </div>
@@ -1222,7 +1236,7 @@ export default function Convergence() {
             }}>
               <LegendSwatch T={T} color={regions['East Asia'].color} label="Region color" mono/>
               <LegendSwatch T={T} color={regions['East Asia'].color} darker label="2+ events overlap" mono/>
-              <LegendSwatch T={T} hatch label="Political violence only" mono/>
+              <LegendSwatch T={T} hatch label="One-sided violence only" mono/>
               <LegendSwatch T={T} empty label="No event" mono/>
             </div>
           </div>
@@ -1345,7 +1359,7 @@ export default function Convergence() {
             </div>
             <Row T={T} mark="●" label="Events active" value={evs.length}/>
             <Row T={T} mark="○" label="Categories" value={
-              `${cell.hasAC ? 'AC' : ''}${cell.hasAC && cell.hasPV ? ' + ' : ''}${cell.hasPV ? 'PV' : ''}`
+              `${cell.hasAC ? 'AC' : ''}${cell.hasAC && cell.hasPV ? ' + ' : ''}${cell.hasPV ? 'OSV' : ''}`
             }/>
             <div className="cv-mono" style={{ fontSize: 9, color: T.mute, marginTop: 6 }}>
               click for original death and displaced figures
@@ -1377,7 +1391,7 @@ export default function Convergence() {
                   fontSize: 9, letterSpacing: '.25em',
                   color: regions[e.region].color, marginBottom: 8,
                 }}>
-                  EVENT · {e.cat === 'PV' ? 'POLITICAL VIOLENCE' : 'ARMED CONFLICT'} · {e.region.toUpperCase()}
+                  EVENT · {e.cat === 'OSV' ? 'ONE-SIDED VIOLENCE' : 'ARMED CONFLICT'} · {e.region.toUpperCase()}
                 </div>
                 <div className="cv-serif" style={{
                   fontSize: isPhone ? 22 : 30, color: T.headline, fontWeight: 500,
@@ -1400,12 +1414,18 @@ export default function Convergence() {
                   <Stat T={T} isPhone={isPhone}
                     label="● ESTIMATED TOTAL KILLED"
                     value={fmtFigure(e.deaths, e.ongoing)}
-                    sub={e.ongoing ? `running total · ${span} year${span > 1 ? 's' : ''}` : `over ${span} year${span > 1 ? 's' : ''}`}
+                    sub={e.excludedFromTotal
+                      ? 'not included in cumulative totals'
+                      : (e.ongoing ? `running total · ${span} year${span > 1 ? 's' : ''}` : `over ${span} year${span > 1 ? 's' : ''}`)}
                     color={T.accent}/>
                   <Stat T={T} isPhone={isPhone}
                     label="○ ESTIMATED TOTAL DISPLACED"
                     value={fmtFigure(e.displaced, e.ongoing) || '—'}
-                    sub={e.displaced ? (e.ongoing ? `running total · ${span} year${span > 1 ? 's' : ''}` : `over ${span} year${span > 1 ? 's' : ''}`) : 'no estimate'}/>
+                    sub={e.displaced
+                      ? (e.excludedFromTotal
+                          ? 'not included in cumulative totals'
+                          : (e.ongoing ? `running total · ${span} year${span > 1 ? 's' : ''}` : `over ${span} year${span > 1 ? 's' : ''}`))
+                      : 'no estimate'}/>
                 </div>
 
                 {/* Description on the left, media slot on the right —
@@ -1480,8 +1500,8 @@ export default function Convergence() {
                     value={evs.length} sub={`covering ${country}`} color={T.accent}/>
                   <Stat T={T} isPhone={isPhone}
                     label="CATEGORIES"
-                    value={`${cell.hasAC ? 'AC' : ''}${cell.hasAC && cell.hasPV ? ' + ' : ''}${cell.hasPV ? 'PV' : ''}`}
-                    sub="AC = armed conflict, PV = political violence"/>
+                    value={`${cell.hasAC ? 'AC' : ''}${cell.hasAC && cell.hasPV ? ' + ' : ''}${cell.hasPV ? 'OSV' : ''}`}
+                    sub="AC = armed conflict, OSV = one-sided violence"/>
                 </div>
                 <div className="cv-mono" style={{
                   fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 10,
@@ -1504,7 +1524,7 @@ export default function Convergence() {
                         fontSize: 8.5, letterSpacing: '.22em',
                         color: regions[e.region].color, marginBottom: 4,
                       }}>
-                        {e.cat === 'PV' ? 'POLITICAL VIOL.' : 'ARMED CONFLICT'}
+                        {e.cat === 'OSV' ? 'ONE-SIDED VIOL.' : 'ARMED CONFLICT'}
                       </div>
                       <div className="cv-serif" style={{
                         fontSize: 16, color: T.text, lineHeight: 1.2, marginBottom: 4,
@@ -1547,7 +1567,7 @@ export default function Convergence() {
                       fontSize: 8.5, letterSpacing: '.22em',
                       color: regions[e.region].color, marginBottom: 4,
                     }}>
-                      {e.cat === 'PV' ? 'POLITICAL VIOL.' : 'ARMED CONFLICT'} · {e.region.toUpperCase()}
+                      {e.cat === 'OSV' ? 'ONE-SIDED VIOL.' : 'ARMED CONFLICT'} · {e.region.toUpperCase()}
                     </div>
                     <div className="cv-serif" style={{
                       fontSize: 16, color: T.text, lineHeight: 1.2, marginBottom: 4,
