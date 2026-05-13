@@ -164,7 +164,7 @@ export default function Convergence() {
   }, []);
 
   // ── theme (shared with the essay; the toggle lives in the essay header) ──
-  const [theme] = useTheme();
+  const [theme, setTheme] = useTheme();
 
   const T = theme === 'dark' ? {
     bg:           '#0e1118',
@@ -559,11 +559,27 @@ export default function Convergence() {
       <div style={{ padding: isPhone ? '0 0 16px' : '0 0 18px' }}>
         <div style={{
           background: T.panel, border: '1px solid ' + T.panelBorder,
-          borderRadius: 6, padding: isPhone ? '14px' : '18px 22px',
+          borderRadius: 16, padding: isPhone ? '14px' : '18px 22px', position: 'relative',
         }}>
+          {/* Convergence-local theme toggle — tied to the same useTheme
+              hook the page-level toggle uses, so the two stay in sync.
+              Kept here so the dashboard reads as self-contained. */}
+          <button
+            onClick={() => setTheme(t => t === 'dark' ? 'light' : 'dark')}
+            aria-label={`Switch convergence view to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+            className="cv-mono"
+            style={{
+              position: 'absolute', top: 14, right: 14,
+              padding: '5px 11px', borderRadius: 99,
+              border: '1px solid ' + T.rule,
+              background: 'transparent', color: T.mute,
+              fontSize: 9.5, letterSpacing: '.2em', cursor: 'pointer',
+            }}>
+            {theme === 'dark' ? '☼ LIGHT' : '☾ DARK'}
+          </button>
 
           {/* Filter rows */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'flex-start', marginBottom: 18 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, alignItems: 'flex-start', marginBottom: 18, paddingRight: 96 }}>
             <FilterGroup label="CATEGORY" T={T}>
               {[['Both', 'BOTH'], ['AC', 'ARMED CONFLICT'], ['OSV', 'ONE-SIDED VIOLENCE']].map(([k, lbl]) => (
                 <button key={k} onClick={() => setCat(k)} className="cv-mono"
@@ -689,109 +705,133 @@ export default function Convergence() {
             </button>
           </div>
 
-          {/* WITHIN-PERIOD STATS · full width; stat set adapts to category filter */}
-          <StatsColumn
-            T={T} isPhone={isPhone}
-            heading={`WITHIN PERIOD · ${yearRange[0]} TO ${yearRange[1]}`}
-            subheading={
-              <>
-                Catalogue events overlapping this range. <strong>Estimated total dead</strong>: approximate cumulative deaths, using mid-range estimates where available — not a precise total, not directly comparable across event types, and may include indirect mortality for some events and direct deaths only for others. <strong>Estimated total displaced</strong>: approximate cumulative displacement events — almost certainly double-counts people displaced more than once and excludes events without reliable displacement estimates.{periodTotals.excludedCount > 0 ? ` ${periodTotals.excludedCount} event${periodTotals.excludedCount === 1 ? '' : 's'} excluded from totals (mortality not auditable).` : ''}
-              </>
-            }
-            items={(() => {
-              const acCount = periodTotals.events.filter(e => e.cat === 'AC').length;
-              const pvCount = periodTotals.events.filter(e => e.cat === 'OSV').length;
-              const total = { label: 'Events overlapping range', value: periodTotals.evCount, big: true, color: T.accent };
-              const deaths = { label: 'Estimated total dead', value: fmtCompact(periodTotals.deathsSum) };
-              const displaced = { label: 'Estimated total displaced', value: fmtCompact(periodTotals.displacedSum) };
-              if (cat === 'AC') return [total, { label: 'Armed conflict', value: acCount }, deaths, displaced];
-              if (cat === 'OSV') return [total, { label: 'One-sided violence', value: pvCount }, deaths, displaced];
-              return [
-                total,
-                { label: 'Armed conflict', value: acCount },
-                { label: 'One-sided violence', value: pvCount },
-                deaths,
-                displaced,
-              ];
-            })()}
-          />
+          {/* WITHIN PERIOD: combined card with 3 numbers in one column and
+              the time-period slider in the other. The slider lives here
+              (not under the histogram) so the range numbers and the
+              drag handles read as a single control. */}
+          <div style={{
+            border: '1px solid ' + T.rule, borderRadius: 16,
+            padding: isPhone ? '14px 16px' : '18px 22px',
+            background: 'transparent',
+          }}>
+            <div className="cv-mono" style={{
+              fontSize: 10, letterSpacing: '.22em', color: T.text, marginBottom: 6,
+            }}>WITHIN PERIOD · {yearRange[0]} TO {yearRange[1]}</div>
+            <div className="cv-mono" style={{
+              fontSize: 9, color: T.faint, marginBottom: 18, letterSpacing: '.04em', lineHeight: 1.5,
+            }}>
+              Catalogue events overlapping this range. Drag the handles on the right to trim the period.
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isPhone ? '1fr' : 'minmax(220px, 1fr) minmax(260px, 1.4fr)',
+              gap: isPhone ? 18 : 36,
+              alignItems: 'center',
+            }}>
+              {/* LEFT: three numbers stacked */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: isPhone ? 14 : 18 }}>
+                {(() => {
+                  const acCount = periodTotals.events.filter(e => e.cat === 'AC').length;
+                  const pvCount = periodTotals.events.filter(e => e.cat === 'OSV').length;
+                  const total = { label: 'Events overlapping range', value: periodTotals.evCount, big: true, color: T.accent };
+                  const items =
+                    cat === 'AC'  ? [total, { label: 'Armed conflict', value: acCount }] :
+                    cat === 'OSV' ? [total, { label: 'One-sided violence', value: pvCount }] :
+                                    [total, { label: 'Armed conflict', value: acCount }, { label: 'One-sided violence', value: pvCount }];
+                  return items.map(it => (
+                    <div key={it.label}>
+                      <div className="cv-serif" style={{
+                        fontSize: it.big ? (isPhone ? 28 : 36) : (isPhone ? 20 : 24),
+                        fontWeight: 500, lineHeight: 1,
+                        color: it.color || T.text, fontVariantNumeric: 'tabular-nums',
+                      }}>{it.value}</div>
+                      <div className="cv-mono" style={{
+                        fontSize: 9.5, color: T.mute, marginTop: 5, letterSpacing: '.06em',
+                      }}>{it.label}</div>
+                    </div>
+                  ));
+                })()}
+              </div>
+
+              {/* RIGHT: time-period slider */}
+              <div>
+                <div className="cv-mono" style={{
+                  fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 10,
+                  display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6,
+                }}>
+                  <span>TIME PERIOD · DRAG HANDLES TO TRIM</span>
+                  <span style={{ color: T.text, fontVariantNumeric: 'tabular-nums' }}>
+                    {yearRange[0]} → {yearRange[1]}{' '}
+                    <span style={{ color: T.faint }}>({yearRange[1] - yearRange[0] + 1} yrs)</span>
+                  </span>
+                </div>
+                <div ref={trackRef} style={{ position: 'relative', height: 34, margin: '0 12px' }}>
+                  <div style={{
+                    position: 'absolute', left: 0, right: 0, top: 16, height: 2,
+                    background: T.rule, borderRadius: 2,
+                  }}/>
+                  <div style={{
+                    position: 'absolute',
+                    left: `${yrToPct(yearRange[0])}%`,
+                    right: `${100 - yrToPct(yearRange[1])}%`,
+                    top: 16, height: 2, background: T.accent,
+                  }}/>
+                  <div
+                    onMouseDown={() => draggingRef.current = 'min'}
+                    onTouchStart={() => draggingRef.current = 'min'}
+                    role="slider"
+                    aria-label="Start year"
+                    aria-valuemin={START_YEAR}
+                    aria-valuemax={END_YEAR}
+                    aria-valuenow={yearRange[0]}
+                    style={{
+                      position: 'absolute', left: `${yrToPct(yearRange[0])}%`,
+                      top: 7, transform: 'translateX(-50%)',
+                      width: 20, height: 20, borderRadius: '50%',
+                      background: T.accent, border: `3px solid ${T.panel}`,
+                      boxShadow: '0 1px 4px rgba(0,0,0,.3)',
+                      cursor: 'grab', touchAction: 'none',
+                    }}
+                  />
+                  <div
+                    onMouseDown={() => draggingRef.current = 'max'}
+                    onTouchStart={() => draggingRef.current = 'max'}
+                    role="slider"
+                    aria-label="End year"
+                    aria-valuemin={START_YEAR}
+                    aria-valuemax={END_YEAR}
+                    aria-valuenow={yearRange[1]}
+                    style={{
+                      position: 'absolute', left: `${yrToPct(yearRange[1])}%`,
+                      top: 7, transform: 'translateX(-50%)',
+                      width: 20, height: 20, borderRadius: '50%',
+                      background: T.accent, border: `3px solid ${T.panel}`,
+                      boxShadow: '0 1px 4px rgba(0,0,0,.3)',
+                      cursor: 'grab', touchAction: 'none',
+                    }}
+                  />
+                  {[1945, 1960, 1975, 1990, 2005, 2020].map(y => (
+                    <div key={y} style={{
+                      position: 'absolute', left: `${yrToPct(y)}%`, top: 26,
+                      transform: 'translateX(-50%)',
+                    }} className="cv-mono">
+                      <span style={{ fontSize: 9, color: T.faint }}>{y}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* TIME PERIOD + HISTOGRAM (kept together) */}
+      {/* HISTOGRAM (slider now lives in WITHIN PERIOD above) */}
       <div style={{ padding: '0 0 14px' }}>
         <div style={{
           background: T.panel, border: '1px solid ' + T.panelBorder,
-          borderRadius: 6, padding: isPhone ? '12px 14px' : '16px 20px',
+          borderRadius: 16, padding: isPhone ? '12px 14px' : '16px 20px',
         }}>
-          {/* TIME PERIOD slider */}
-          <div style={{ marginBottom: 18 }}>
-            <div className="cv-mono" style={{
-              fontSize: 9, letterSpacing: '.22em', color: T.faint, marginBottom: 10,
-              display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6,
-            }}>
-              <span>TIME PERIOD · DRAG HANDLES TO TRIM</span>
-              <span style={{ color: T.text, fontVariantNumeric: 'tabular-nums' }}>
-                {yearRange[0]} → {yearRange[1]}{' '}
-                <span style={{ color: T.faint }}>({yearRange[1] - yearRange[0] + 1} yrs)</span>
-              </span>
-            </div>
-            <div ref={trackRef} style={{ position: 'relative', height: 34, margin: '0 12px' }}>
-              <div style={{
-                position: 'absolute', left: 0, right: 0, top: 16, height: 2,
-                background: T.rule, borderRadius: 2,
-              }}/>
-              <div style={{
-                position: 'absolute',
-                left: `${yrToPct(yearRange[0])}%`,
-                right: `${100 - yrToPct(yearRange[1])}%`,
-                top: 16, height: 2, background: T.accent,
-              }}/>
-              <div
-                onMouseDown={() => draggingRef.current = 'min'}
-                onTouchStart={() => draggingRef.current = 'min'}
-                role="slider"
-                aria-label="Start year"
-                aria-valuemin={START_YEAR}
-                aria-valuemax={END_YEAR}
-                aria-valuenow={yearRange[0]}
-                style={{
-                  position: 'absolute', left: `${yrToPct(yearRange[0])}%`,
-                  top: 7, transform: 'translateX(-50%)',
-                  width: 20, height: 20, borderRadius: '50%',
-                  background: T.accent, border: `3px solid ${T.panel}`,
-                  boxShadow: '0 1px 4px rgba(0,0,0,.3)',
-                  cursor: 'grab', touchAction: 'none',
-                }}
-              />
-              <div
-                onMouseDown={() => draggingRef.current = 'max'}
-                onTouchStart={() => draggingRef.current = 'max'}
-                role="slider"
-                aria-label="End year"
-                aria-valuemin={START_YEAR}
-                aria-valuemax={END_YEAR}
-                aria-valuenow={yearRange[1]}
-                style={{
-                  position: 'absolute', left: `${yrToPct(yearRange[1])}%`,
-                  top: 7, transform: 'translateX(-50%)',
-                  width: 20, height: 20, borderRadius: '50%',
-                  background: T.accent, border: `3px solid ${T.panel}`,
-                  boxShadow: '0 1px 4px rgba(0,0,0,.3)',
-                  cursor: 'grab', touchAction: 'none',
-                }}
-              />
-              {[1945, 1960, 1975, 1990, 2005, 2020].map(y => (
-                <div key={y} style={{
-                  position: 'absolute', left: `${yrToPct(y)}%`, top: 26,
-                  transform: 'translateX(-50%)',
-                }} className="cv-mono">
-                  <span style={{ fontSize: 9, color: T.faint }}>{y}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* HISTOGRAM header */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -827,21 +867,15 @@ export default function Convergence() {
             display: 'flex', gap: isPhone ? 16 : 28, flexWrap: 'wrap', alignItems: 'baseline',
           }}>
             {(() => {
-              const acCount = activeInYear.filter(e => e.cat === 'AC').length;
-              const pvCount = activeInYear.filter(e => e.cat === 'OSV').length;
-              const totalable = activeInYear.filter(e => !e.excludedFromTotal);
-              const deathsSum = totalable.reduce((s, e) => s + (e.deathsEst || 0), 0);
-              const displacedSum = totalable.reduce((s, e) => s + (e.displacedEst || 0), 0);
-              const ac = { label: 'Armed conflict', value: acCount };
-              const pv = { label: 'One-sided violence', value: pvCount };
-              const dead = { label: 'Estimated total dead', value: fmtCompact(deathsSum) };
-              const displaced = { label: 'Estimated total displaced', value: fmtCompact(displacedSum) };
-              const items =
-                cat === 'AC' ? [ac, dead, displaced] :
-                cat === 'OSV' ? [pv, dead, displaced] :
-                [ac, pv, dead, displaced];
+              // Yearly breakdown is intentionally minimal: the year is the
+              // anchor; "Events active" is the count of catalogue entries
+              // that overlap that year under the current category filter.
+              const items = [
+                { label: 'Year', value: scrubYear },
+                { label: 'Events active', value: activeInYear.length },
+              ];
               return items.map(it => (
-                <div key={it.label} style={{ minWidth: 90 }}>
+                <div key={it.label} style={{ minWidth: 110 }}>
                   <div className="cv-serif" style={{
                     fontSize: isPhone ? 18 : 22, fontWeight: 500, lineHeight: 1,
                     color: T.text, fontVariantNumeric: 'tabular-nums',
@@ -862,18 +896,19 @@ export default function Convergence() {
         gridTemplateColumns: isDesktop ? `minmax(0, ${mapW + 40}px) 1fr` : '1fr',
         gap: isPhone ? 14 : 20,
         padding: '0 0 20px',
-        alignItems: 'start',
+        alignItems: 'stretch',
       }}>
 
         {/* MAP */}
         <div ref={mapRef} style={{
           background: T.panel, border: '1px solid ' + T.panelBorder,
-          borderRadius: 6, padding: isPhone ? 12 : 18, position: 'relative',
+          borderRadius: 16, padding: isPhone ? 12 : 18, position: 'relative',
+          display: 'flex', flexDirection: 'column', height: '100%',
         }} onMouseLeave={() => setMapHover(null)}>
-          <div className="cv-mono" style={{
-            fontSize: 9, letterSpacing: '.25em', color: T.mute, marginBottom: 8,
+          <div style={{
+            fontSize: 12, color: T.text, lineHeight: 1.5, marginBottom: 10, maxWidth: 640,
           }}>
-            MAP · {scrubYear} · {activeInYear.length} ACTIVE EVENT{activeInYear.length === 1 ? '' : 'S'}
+            For the year currently scrubbed, where were catalogue events active? Hover a symbol to read the event; symbol shape encodes category (circle = armed conflict, diamond = one-sided violence); core radius and halo encode estimated mortality and displacement on a square-root scale. Figures are mid-range estimates from the cited sources; ranges and excluded events are flagged on each event card.
           </div>
           <svg viewBox={`0 0 ${mapW} ${mapH}`} style={{
             width: '100%', height: 'auto', display: 'block', maxWidth: '100%',
@@ -1086,150 +1121,110 @@ export default function Convergence() {
             );
           })()}
 
-          {/* MAP LEGEND */}
+          {/* MAP LEGEND — compact, single row, kept inside the map's own
+              rounded rectangle (no separate panel). Three sub-groups
+              flow horizontally; each is small enough that the entire
+              legend fits within the map's width on desktop and wraps
+              cleanly on phones. */}
           <div style={{
-            display: 'grid',
-            gridTemplateColumns: isPhone ? '1fr' : 'minmax(180px, 1fr) minmax(220px, 1fr) minmax(220px, 1fr)',
-            gap: isPhone ? 18 : 36,
-            marginTop: 16, paddingTop: 16,
+            display: 'flex', flexWrap: 'wrap', gap: isPhone ? 14 : 22,
+            marginTop: 'auto', paddingTop: 14,
             borderTop: '1px solid ' + T.rule,
-            alignItems: 'start',
+            alignItems: 'center', justifyContent: 'space-between',
           }}>
-            {/* Category encoded by shape */}
-            <div>
-              <div className="cv-mono" style={{
-                fontSize: 9, letterSpacing: '.22em', color: T.text, marginBottom: 4,
-              }}>CATEGORY</div>
-              <div className="cv-mono" style={{
-                fontSize: 8.5, letterSpacing: '.18em', color: T.faint, marginBottom: 14,
-              }}>NOMINAL · ENCODED BY SHAPE</div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <svg width="32" height="32" style={{ flexShrink: 0 }}>
-                    <circle cx={16} cy={16} r={13} fill={T.accent}/>
-                  </svg>
-                  <span className="cv-serif" style={{ fontSize: 14, color: T.text }}>
-                    Armed Conflict
+            {/* CATEGORY · shape */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span className="cv-mono" style={{
+                fontSize: 8.5, letterSpacing: '.22em', color: T.faint,
+              }}>CATEGORY</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <svg width="14" height="14"><circle cx={7} cy={7} r={5.5} fill={T.accent}/></svg>
+                <span className="cv-serif" style={{ fontSize: 12, color: T.text }}>Armed conflict</span>
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <svg width="14" height="14">
+                  <polygon points="7,1 13,7 7,13 1,7" fill={T.accent}/>
+                </svg>
+                <span className="cv-serif" style={{ fontSize: 12, color: T.text }}>One-sided violence</span>
+              </span>
+            </div>
+
+            {/* FATALITIES · core radius (range only — three discrete steps) */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="cv-mono" style={{
+                fontSize: 8.5, letterSpacing: '.22em', color: T.faint,
+              }}>FATALITIES (RANGE)</span>
+              {[1e4, 1e6, MAX_DEATHS].map(v => {
+                const r = radiusForDeaths(v);
+                return (
+                  <span key={v} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{
+                      width: r * 2, height: r * 2, borderRadius: '50%', background: T.accent,
+                      display: 'inline-block',
+                    }}/>
+                    <span className="cv-mono" style={{
+                      fontSize: 9, color: T.mute, fontVariantNumeric: 'tabular-nums',
+                    }}>{fmt(v)}</span>
                   </span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <svg width="32" height="32" style={{ flexShrink: 0 }}>
-                    {(() => {
-                      const x = 16, y = 16, r = 13;
-                      const pts = `${x},${y - r} ${x + r},${y} ${x},${y + r} ${x - r},${y}`;
-                      return <polygon points={pts} fill={T.accent}/>;
-                    })()}
-                  </svg>
-                  <span className="cv-serif" style={{ fontSize: 14, color: T.text }}>
-                    One-sided violence
+                );
+              })}
+            </div>
+
+            {/* DISPLACEMENT · halo radius */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span className="cv-mono" style={{
+                fontSize: 8.5, letterSpacing: '.22em', color: T.faint,
+              }}>DISPLACEMENT (RANGE)</span>
+              {[1e5, 1e6, 1e7].map(v => {
+                const r = radiusForDisplaced(v);
+                return (
+                  <span key={v} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{
+                      width: r * 2, height: r * 2, borderRadius: '50%',
+                      background: T.accent, opacity: 0.32, display: 'inline-block',
+                    }}/>
+                    <span className="cv-mono" style={{
+                      fontSize: 9, color: T.mute, fontVariantNumeric: 'tabular-nums',
+                    }}>{fmt(v)}</span>
                   </span>
-                </div>
-              </div>
+                );
+              })}
             </div>
-
-            {/* Fatalities encoded by core radius */}
-            <div>
-              <div className="cv-mono" style={{
-                fontSize: 9, letterSpacing: '.22em', color: T.text, marginBottom: 4,
-              }}>FATALITIES</div>
-              <div className="cv-mono" style={{
-                fontSize: 8.5, letterSpacing: '.18em', color: T.faint, marginBottom: 14,
-              }}>QUANTITATIVE · ENCODED BY CORE RADIUS · SQRT-SCALED</div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, height: 64 }}>
-                {[1e3, 1e5, 1e7, MAX_DEATHS].map(v => {
-                  const r = radiusForDeaths(v);
-                  return (
-                    <div key={v} style={{
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', gap: 6, minWidth: r * 2,
-                    }}>
-                      <div style={{
-                        width: r * 2, height: r * 2, borderRadius: '50%',
-                        background: T.accent,
-                      }}/>
-                      <span className="cv-mono" style={{
-                        fontSize: 9, color: T.mute, fontVariantNumeric: 'tabular-nums',
-                      }}>{fmt(v)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Displacement encoded by halo radius */}
-            <div>
-              <div className="cv-mono" style={{
-                fontSize: 9, letterSpacing: '.22em', color: T.text, marginBottom: 4,
-              }}>DISPLACEMENT</div>
-              <div className="cv-mono" style={{
-                fontSize: 8.5, letterSpacing: '.18em', color: T.faint, marginBottom: 14,
-              }}>QUANTITATIVE · ENCODED BY HALO RADIUS · SQRT-SCALED</div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, height: 64 }}>
-                {[1e5, 1e6, 1e7].map(v => {
-                  const r = radiusForDisplaced(v);
-                  return (
-                    <div key={v} style={{
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', gap: 6, minWidth: r * 2,
-                    }}>
-                      <div style={{
-                        width: r * 2, height: r * 2, borderRadius: '50%',
-                        position: 'relative',
-                      }}>
-                        <div style={{
-                          position: 'absolute', inset: 0, borderRadius: '50%',
-                          background: T.accent, opacity: 0.22,
-                        }}/>
-                        <div style={{
-                          position: 'absolute', top: '50%', left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          width: 6, height: 6, borderRadius: '50%',
-                          background: T.accent,
-                        }}/>
-                      </div>
-                      <span className="cv-mono" style={{
-                        fontSize: 9, color: T.mute, fontVariantNumeric: 'tabular-nums',
-                      }}>{fmt(v)}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {pinnedCountry && (
-              <button onClick={() => setPinnedCountry(null)} className="cv-mono" style={{
-                gridColumn: '1 / -1',
-                justifySelf: 'end',
-                background: 'transparent', color: T.accent,
-                border: '1px solid ' + T.accent, padding: '4px 10px',
-                fontSize: 9, letterSpacing: '.2em', borderRadius: 99, cursor: 'pointer',
-              }}>
-                ✕ UNPIN {pinnedCountry.toUpperCase()}
-              </button>
-            )}
           </div>
+          {/* Estimate-ranges note — kept terse and tucked under the
+              compact legend so the reader sees the range-and-uncertainty
+              caveat without expanding the panel. */}
+          <div className="cv-mono" style={{
+            fontSize: 9, color: T.faint, marginTop: 8, lineHeight: 1.55,
+          }}>
+            Figures are mid-range estimates with low / mid / high bounds in the underlying CSV. Where the source describes deaths as "uncounted", "contested", or where no defensible mid-range exists, the event is shown on the map but excluded from cumulative totals; the event card flags this explicitly. A trailing <strong style={{ color: T.text }}>+</strong> on a figure marks an ongoing event whose total is running through {DATA_AS_OF}.
+          </div>
+          {pinnedCountry && (
+            <button onClick={() => setPinnedCountry(null)} className="cv-mono" style={{
+              alignSelf: 'flex-end', marginTop: 10,
+              background: 'transparent', color: T.accent,
+              border: '1px solid ' + T.accent, padding: '4px 10px',
+              fontSize: 9, letterSpacing: '.2em', borderRadius: 99, cursor: 'pointer',
+            }}>
+              ✕ UNPIN {pinnedCountry.toUpperCase()}
+            </button>
+          )}
         </div>
 
         {/* GRID */}
         <div style={{
           background: T.panel, border: '1px solid ' + T.panelBorder,
-          borderRadius: 6, padding: isPhone ? '12px' : '14px 16px',
+          borderRadius: 16, padding: isPhone ? '12px' : '14px 16px',
           position: 'relative', overflowX: 'auto',
+          display: 'flex', flexDirection: 'column', height: '100%',
         }} onMouseLeave={() => setGridHover(null)}>
           <div style={{ marginBottom: 12 }}>
-            <div className="cv-mono" style={{
-              fontSize: 9, letterSpacing: '.25em', color: T.mute,
-              display: 'flex', justifyContent: 'space-between', gap: 8,
-            }}>
-              <span>WHEN AND WHERE · {pinnedCountry
-                ? `${pinnedCountry.toUpperCase()} ONLY`
-                : `${countries.length} COUNTRIES × ${years.length} YEARS`}</span>
-              <span style={{ color: T.faint }}>CLICK COUNTRY → PIN · CLICK CELL → OPEN</span>
-            </div>
             <div style={{
-              fontSize: 12, color: T.text, marginTop: 6, maxWidth: 780, lineHeight: 1.5,
+              fontSize: 12, color: T.text, lineHeight: 1.5, maxWidth: 640,
             }}>
-              For each country, in each year, was a catalogue event under way? Reads as a calendar of where violence was happening at the same time.
+              For each country, in each year, was a catalogue event under way? Reads as a calendar of where violence was happening at the same time. Click a country label to pin it; click a cell to open the event. {pinnedCountry
+                ? <span style={{ color: T.faint }}>Currently pinned: <strong style={{ color: T.text }}>{pinnedCountry}</strong>.</span>
+                : <span style={{ color: T.faint }}>Currently showing {countries.length} countries × {years.length} years.</span>}
             </div>
             <div style={{
               display: 'flex', gap: 18, marginTop: 10, flexWrap: 'wrap', alignItems: 'center',
@@ -1378,7 +1373,7 @@ export default function Convergence() {
       <div style={{ padding: isPhone ? '0 0 24px' : '0 0 32px' }}>
         <div style={{
           background: T.panel, border: '1px solid ' + T.panelBorder,
-          borderRadius: 6, padding: isPhone ? '14px 16px' : '20px 24px', minHeight: 160,
+          borderRadius: 16, padding: isPhone ? '14px 16px' : '20px 24px', minHeight: 160,
         }}>
 
           {detailMode === 'event' && (() => {
